@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block page_title %}Propositions d'augmentation{% endblock %}
+{% block content %}
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <span>
+      {% if role == 'MANAGER' %}Mes propositions d'augmentation
+      {% elif role == 'RH' %}Propositions à valider
+      {% elif role == 'DIRECTION' %}Propositions à approuver
+      {% elif role == 'PAYROLL' %}Propositions à appliquer
+      {% else %}Toutes les propositions d'augmentation (lecture seule){% endif %}
+    </span>
+    {% if role == 'MANAGER' or role == 'DIRECTION' %}
+    <a href="{% url 'payroll:proposal_new' %}" class="td-btn td-btn-primary td-btn-sm">+ Nouvelle proposition</a>
+    {% endif %}
+  </div>
+
+  <div style="overflow-x:auto;">
+  <table class="td-table" style="min-width:900px;">
+    <thead>
+      <tr>
+        <th>Employé</th><th>Salaire</th><th>Motif</th><th>Date d'effet</th>
+        <th>Manager</th><th>RH</th><th>Direction</th><th>Statut</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in proposals %}
+      <tr>
+        <td>{{ p.employee }}</td>
+        <td style="white-space:nowrap;">{{ p.current_salary }} → <strong>{{ p.proposed_salary }}</strong> ({{ p.increase_percentage }}%)</td>
+        <td>{{ p.get_motif_display }}</td>
+        <td>{{ p.effective_date }}</td>
+        <td style="font-size:.85rem;">{{ p.proposed_by.get_full_name|default:p.proposed_by.username|default:"—" }}</td>
+        <td style="font-size:.85rem; max-width:140px;">
+          {% if p.rh_reviewed_by %}{{ p.rh_reviewed_by.get_full_name|default:p.rh_reviewed_by.username }}{% if p.rh_note %}<br><span style="color:var(--td-text-muted);">« {{ p.rh_note }} »</span>{% endif %}
+          {% else %}—{% endif %}
+        </td>
+        <td style="font-size:.85rem; max-width:140px;">
+          {% if p.approved_by %}{{ p.approved_by.get_full_name|default:p.approved_by.username }}{% if p.decision_note %}<br><span style="color:var(--td-text-muted);">« {{ p.decision_note }} »</span>{% endif %}
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if p.status == 'PENDING_RH' %}<span class="td-badge td-badge-pending">En attente RH</span>
+          {% elif p.status == 'PENDING_DIRECTION' %}<span class="td-badge td-badge-info">En attente Direction</span>
+          {% elif p.status == 'APPROVED' %}<span class="td-badge td-badge-info">Approuvée — à appliquer</span>
+          {% elif p.status == 'APPLIED' %}<span class="td-badge td-badge-approved">Appliquée</span>
+          {% else %}<span class="td-badge td-badge-rejected">Rejetée</span>{% endif %}
+        </td>
+        <td style="white-space:nowrap;">
+          <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+          {% if p.status == 'PENDING_RH' and role == 'RH' %}
+            <a href="{% url 'payroll:proposal_rh_validate' p.pk %}" class="td-btn td-btn-primary td-btn-sm">Valider</a>
+            <a href="{% url 'payroll:proposal_rh_reject' p.pk %}" class="td-btn td-btn-outline td-btn-sm">Rejeter</a>
+          {% elif p.status == 'PENDING_DIRECTION' and role == 'DIRECTION' %}
+            <a href="{% url 'payroll:proposal_direction_approve' p.pk %}" class="td-btn td-btn-primary td-btn-sm">Approuver</a>
+            <a href="{% url 'payroll:proposal_direction_reject' p.pk %}" class="td-btn td-btn-outline td-btn-sm">Rejeter</a>
+          {% elif p.status == 'APPROVED' and role == 'PAYROLL' %}
+            <a href="{% url 'payroll:proposal_apply' p.pk %}" class="td-btn td-btn-primary td-btn-sm">Appliquer</a>
+          {% else %}
+            <span style="color:var(--td-text-muted); font-size:.8rem;">—</span>
+          {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="td-empty">Aucune proposition.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

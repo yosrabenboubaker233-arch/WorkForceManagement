@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block page_title %}Espace Manager{% endblock %}
+{% block content %}
+
+<div class="td-grid" style="margin-bottom: 8px;">
+  <div class="td-stat">
+    <div class="td-stat-value">{{ team|length }}</div>
+    <div class="td-stat-label">Membres de mon équipe</div>
+  </div>
+  <div class="td-stat">
+    <div class="td-stat-value">{{ pending_leaves|length }}</div>
+    <div class="td-stat-label">Congés en attente de validation</div>
+  </div>
+  <div class="td-stat">
+    <div class="td-stat-value">{{ alerts|length }}</div>
+    <div class="td-stat-label">Alertes d'absence non traitées</div>
+  </div>
+  <div class="td-stat">
+    <div class="td-stat-value">{{ my_proposals_pending }}</div>
+    <div class="td-stat-label">Propositions d'augmentation en cours</div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 22px;">
+  <div class="td-card">
+    <div class="td-card-title">🗓️ Demandes de congé à traiter</div>
+    {% if pending_leaves %}
+      {% for l in pending_leaves %}
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--td-border);">
+        <div>
+          <strong>{{ l.employee }}</strong>
+          <div style="color:var(--td-text-muted); font-size:.82rem;">{{ l.start_date }} → {{ l.end_date }} ({{ l.leave_type }})</div>
+        </div>
+        <a href="{% url 'leaves:validation_inbox' %}" class="td-btn td-btn-outline td-btn-sm">Traiter</a>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="td-empty">Aucune demande en attente 🎉</div>
+    {% endif %}
+    <a href="{% url 'leaves:validation_inbox' %}" class="td-btn td-btn-primary td-btn-sm" style="margin-top:14px;">Voir toutes les demandes</a>
+  </div>
+
+  <div class="td-card">
+    <div class="td-card-title">⚠️ Alertes d'absence</div>
+    {% if alerts %}
+      {% for a in alerts %}
+      <div style="padding:10px 0; border-bottom:1px solid var(--td-border);">
+        <strong>{{ a.employee }}</strong> — {{ a.date }}
+        <div style="color:var(--td-text-muted); font-size:.82rem;">{{ a.message }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="td-empty">Aucune anomalie détectée.</div>
+    {% endif %}
+    <a href="{% url 'attendance:alerts' %}" class="td-btn td-btn-primary td-btn-sm" style="margin-top:14px;">Voir toutes les alertes</a>
+  </div>
+</div>
+
+
+<div class="td-card" style="margin-top:22px;">
+  <div class="td-card-title">📈 Augmentations de salaire — mes propositions</div>
+  {% if my_proposals_recent %}
+  <table class="td-table">
+    <thead><tr><th>Employé</th><th>Actuel → Proposé</th><th>Motif</th><th>Statut</th></tr></thead>
+    <tbody>
+      {% for p in my_proposals_recent %}
+      <tr>
+        <td>{{ p.employee }}</td>
+        <td>{{ p.current_salary }} → {{ p.proposed_salary }} ({{ p.increase_percentage }}%)</td>
+        <td>{{ p.get_motif_display }}</td>
+        <td>
+          {% if p.status == 'PENDING_RH' %}<span class="td-badge td-badge-pending">Attente RH</span>
+          {% elif p.status == 'PENDING_DIRECTION' %}<span class="td-badge td-badge-pending">Attente Direction</span>
+          {% elif p.status == 'APPROVED' %}<span class="td-badge td-badge-info">Approuvée — attente Paie</span>
+          {% elif p.status == 'APPLIED' %}<span class="td-badge td-badge-approved">Appliquée</span>
+          {% else %}<span class="td-badge td-badge-rejected">Rejetée</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="td-empty">Vous n'avez encore proposé aucune augmentation.</div>
+  {% endif %}
+  <a href="{% url 'payroll:proposal_list' %}" class="td-btn td-btn-primary td-btn-sm" style="margin-top:14px;">Voir toutes mes propositions →</a>
+</div>
+
+<div class="td-card" style="margin-top:22px;">
+  <div class="td-card-title">👥 Mon équipe</div>
+  <table class="td-table">
+    <thead><tr><th>Nom</th><th>Poste</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for e in team %}
+      <tr>
+        <td>{{ e }}</td>
+        <td>{{ e.job_title }}</td>
+        <td><span class="td-badge td-badge-approved">{{ e.get_status_display }}</span></td>
+        <td>
+          <a href="{% url 'employees:detail' e.pk %}">Voir le dossier →</a>
+          · <a href="{% url 'payroll:proposal_create' e.pk %}">📈 Proposer une augmentation</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="td-empty">Aucun membre d'équipe rattaché.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="td-card">
+    <div class="td-card-title">🕒 Mes derniers pointages</div>
+    {% if my_attendance %}
+    <table class="td-table">
+      <thead><tr><th>Date</th><th>Arrivée</th><th>Statut</th></tr></thead>
+      <tbody>
+        {% for a in my_attendance %}
+        <tr>
+          <td>{{ a.date }}</td>
+          <td>{{ a.check_in|default:"—" }}</td>
+          <td>
+            {% if a.status == 'PRESENT' %}<span class="td-badge td-badge-approved">Présent</span>
+            {% elif a.status == 'ABSENT' %}<span class="td-badge td-badge-rejected">Absent</span>
+            {% elif a.status == 'ON_LEAVE' %}<span class="td-badge td-badge-info">En congé</span>
+            {% else %}<span class="td-badge td-badge-pending">{{ a.get_status_display }}</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="td-empty">Aucun pointage enregistré.</div>
+    {% endif %}
+    <a href="{% url 'attendance:checkin' %}" class="td-btn td-btn-primary td-btn-sm" style="margin-top:14px;">Pointer maintenant</a>
+</div>
+
+{% endblock %}

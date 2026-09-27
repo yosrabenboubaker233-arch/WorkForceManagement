@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block page_title %}Dossier employé{% endblock %}
+{% block content %}
+
+<div class="td-card" style="display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap;">
+  <div style="display:flex; align-items:center; gap:16px;">
+    {% if employee.user.avatar %}
+    <img src="{{ employee.user.avatar.url }}" alt="Photo" style="width:58px;height:58px;border-radius:50%;object-fit:cover;">
+    {% else %}
+    <div class="td-avatar" style="width:58px;height:58px;font-size:1.3rem;">{{ employee.full_name|first|upper }}</div>
+    {% endif %}
+    <div>
+      <div style="font-size:1.25rem; font-weight:800;">{{ employee.full_name }}</div>
+      <div style="color:var(--td-text-muted);">{{ employee.job_title|default:"Poste non renseigné" }} · {{ employee.department|default:"—" }}</div>
+      <div style="color:var(--td-text-muted); font-size:.85rem; margin-top:4px;">
+        📧 <a href="mailto:{{ employee.user.email }}">{{ employee.user.email|default:"Aucun email renseigné" }}</a>
+        {% if employee.user.phone %} · 📞 {{ employee.user.phone }}{% endif %}
+        {% if employee.address %} · 🏠 {{ employee.address }}{% endif %}
+      </div>
+    </div>
+  </div>
+  <div style="display:flex; gap:10px;">
+    {% if employee.user == user %}
+    <a href="{% url 'employees:my_profile' %}" class="td-btn td-btn-outline">👤 Modifier mon profil</a>
+    {% endif %}
+    {% if user.role == 'RH' or user.role == 'ADMIN' %}
+    <a href="{% url 'employees:edit' employee.pk %}" class="td-btn td-btn-outline">✏️ Modifier le dossier</a>
+    {% endif %}
+    {% if user.role == 'ADMIN' %}
+    <a href="{% url 'employees:delete' employee.pk %}" class="td-btn td-btn-danger">🗑️ Supprimer</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="td-grid">
+  <div class="td-stat"><div class="td-stat-value">{{ employee.leave_balance_days }}</div><div class="td-stat-label">Solde de congés (jours)</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ employee.weekly_hours }}h</div><div class="td-stat-label">Heures / semaine <span style="font-weight:400;">(≈ {{ heures_mois_moyenne }}h/mois en moyenne)</span></div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ employee.hire_date|default:"—" }}</div><div class="td-stat-label">Date d'embauche</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ employee.manager|default:"—" }}</div><div class="td-stat-label">Manager direct</div></div>
+</div>
+
+<div class="td-card">
+  <div class="td-card-title">
+    📄 Contrats
+    {% if user.role == 'RH' %}
+    <a href="{% url 'employees:contract_create' employee.pk %}" class="td-btn td-btn-primary td-btn-sm">+ Nouveau contrat</a>
+    {% endif %}
+  </div>
+  <table class="td-table">
+    <thead><tr><th>N°</th><th>Type</th><th>Période</th><th>Poste</th><th>Salaire base</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for c in employee.contracts.all %}
+      <tr>
+        <td>{{ c.contract_number }}</td>
+        <td>{{ c.get_contract_type_display }}</td>
+        <td>{{ c.start_date }} {% if c.end_date %}→ {{ c.end_date }}{% else %}→ <em>en cours (durée indéterminée)</em>{% endif %}</td>
+        <td>{{ c.job_title }}</td>
+        <td>{{ c.base_salary }} DT{% if c.bonuses %} + {{ c.bonuses }} DT{% endif %}</td>
+        <td>
+          {% if c.status == 'ACTIVE' %}<span class="td-badge td-badge-approved">Actif</span>
+          {% elif c.status == 'SUSPENDED' %}<span class="td-badge td-badge-pending">Suspendu</span>
+          {% else %}<span class="td-badge td-badge-muted">Terminé</span>{% endif %}
+          {% if c.is_trial_period_active %}<span class="td-badge td-badge-info">Période d'essai</span>{% endif %}
+        </td>
+        <td>
+          <a href="{% url 'employees:contract_detail' c.id %}">👁️ Voir</a>
+          {% if user.role == 'RH' %}
+          · <a href="{% url 'employees:contract_edit' c.id %}">Modifier</a>
+          {% if c.status == 'ACTIVE' %} · <a href="{% url 'employees:contract_end' c.id %}" style="color:var(--td-danger);">Clôturer</a>{% endif %}
+          · <a href="{% url 'employees:contract_delete' c.id %}" style="color:var(--td-danger);" onclick="return confirm('Supprimer définitivement ce contrat ?');">Supprimer</a>
+          {% endif %}
+          {% if c.document %} · <a href="{{ c.document.url }}" target="_blank">📎</a>{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="td-empty">Aucun contrat enregistré.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:22px;">
+  <div class="td-card">
+    <div class="td-card-title">📎 CV & Documents</div>
+    {% if employee.cv_file %}
+      <p><a href="{{ employee.cv_file.url }}" target="_blank">📄 Télécharger le CV</a></p>
+    {% endif %}
+    {% for doc in documents %}
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--td-border);">
+      <span>{{ doc.get_kind_display }} — {{ doc.title }}</span>
+      <span style="display:flex; gap:12px;">
+        <a href="{{ doc.file.url }}" target="_blank">Ouvrir</a>
+        <a href="{% url 'employees:document_edit' doc.id %}">Modifier</a>
+        <a href="{% url 'employees:document_delete' doc.id %}" onclick="return confirm('Supprimer ce document ?');" style="color:var(--td-danger);">Supprimer</a>
+      </span>
+    </div>
+    {% empty %}
+    <div class="td-empty">Aucun document.</div>
+    {% endfor %}
+    <a href="{% url 'employees:document_upload' employee.pk %}" class="td-btn td-btn-primary td-btn-sm" style="margin-top:14px;">+ Ajouter un document</a>
+  </div>
+
+  <div class="td-card">
+    <div class="td-card-title">📜 Historique professionnel</div>
+    {% for h in history %}
+    <div style="padding:8px 0; border-bottom:1px solid var(--td-border);">
+      <span class="td-badge td-badge-info">{{ h.get_kind_display }}</span>
+      <strong>{{ h.title }}</strong>
+      <div style="color:var(--td-text-muted); font-size:.82rem;">{{ h.date }} — {{ h.description }}</div>
+    </div>
+    {% empty %}
+    <div class="td-empty">Aucun historique enregistré.</div>
+    {% endfor %}
+    {% if user.role == 'RH' or user.role == 'ADMIN' %}
+    <a href="{% url 'employees:history_add' employee.pk %}" class="td-btn td-btn-primary td-btn-sm" style="margin-top:14px;">+ Ajouter un événement</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if team %}
+<div class="td-card">
+  <div class="td-card-title">👥 Équipe managée</div>
+  <table class="td-table">
+    <thead><tr><th>Nom</th><th>Poste</th><th></th></tr></thead>
+    <tbody>
+      {% for m in team %}
+      <tr><td>{{ m }}</td><td>{{ m.job_title }}</td><td><a href="{% url 'employees:detail' m.pk %}">Voir →</a></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% endblock %}

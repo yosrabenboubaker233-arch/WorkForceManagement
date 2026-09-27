@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block page_title %}Clôturer un contrat{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:520px;">
+  <div class="td-card-title">Clôturer {{ contract.contract_number }} — {{ contract.employee }}</div>
+  <p style="color:var(--td-text-muted); font-size:.85rem;">
+    {{ contract.get_contract_type_display }} depuis le {{ contract.start_date }}.
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <label class="td-label">Motif de fin de contrat</label>
+    {{ form.end_reason }}
+    <button class="td-btn td-btn-danger">Confirmer la clôture</button>
+    <a href="{% url 'employees:detail' contract.employee.pk %}" class="td-btn td-btn-outline">Annuler</a>
+  </form>
+</div>
+{% endblock %}

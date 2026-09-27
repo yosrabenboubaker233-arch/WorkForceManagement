@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block page_title %}Espace Paie{% endblock %}
+{% block content %}
+
+{% if proposals_to_apply %}
+<div class="td-alert td-alert-warning">
+  📈 {{ proposals_to_apply }} augmentation(s) approuvée(s) par la Direction, en attente d'application en paie.
+  <a href="{% url 'payroll:proposal_list' %}" style="font-weight:700;">Appliquer maintenant →</a>
+</div>
+{% endif %}
+
+<div class="td-card">
+  <div class="td-card-title">Accès rapides</div>
+  <div style="display:flex; gap:12px; flex-wrap:wrap;">
+    <a href="{% url 'payroll:queue' %}" class="td-btn td-btn-outline">💳 File d'attente ({{ payroll_to_process }} à traiter)</a>
+    <a href="{% url 'payroll:proposal_list' %}" class="td-btn td-btn-outline">📈 Augmentations à appliquer ({{ proposals_to_apply }})</a>
+    <a href="{% url 'employees:list' %}" class="td-btn td-btn-outline">👤 Annuaire des employés</a>
+    <a href="{% url 'leaves:my_requests' %}" class="td-btn td-btn-outline">🏖️ Mes demandes de congé</a>
+    <a href="{% url 'leaves:my_authorizations' %}" class="td-btn td-btn-outline">📝 Mes autorisations</a>
+  </div>
+</div>
+
+<div class="td-card">
+  <div class="td-card-title">💰 Derniers salaires enregistrés</div>
+  <table class="td-table">
+    <thead><tr><th>Employé</th><th>Salaire de base</th><th>Total</th><th></th></tr></thead>
+    <tbody>
+      {% for s in salaries %}
+      <tr>
+        <td>{{ s.employee }}</td>
+        <td>{{ s.base_amount }} {{ s.currency }}</td>
+        <td><strong>{{ s.total }} {{ s.currency }}</strong></td>
+        <td><a href="{% url 'payroll:detail' s.employee.pk %}">Détail →</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="td-empty">Aucun salaire enregistré pour le moment.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'payroll:list' %}" class="td-btn td-btn-primary td-btn-sm" style="margin-top:14px;">Voir tous les salaires</a>
+</div>
+
+{% endblock %}

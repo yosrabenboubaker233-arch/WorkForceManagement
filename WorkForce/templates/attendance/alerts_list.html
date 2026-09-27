@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block page_title %}Alertes d'absence{% endblock %}
+{% block content %}
+
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0;">🔍 Rechercher par date</div>
+  <form method="get" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div>
+      <label class="td-label">Date précise</label>
+      <input class="td-input" style="margin-bottom:0;" type="date" name="date" value="{{ selected_date|default:'' }}">
+    </div>
+    <span style="color:var(--td-text-muted); padding-bottom:10px;">— ou —</span>
+    <div>
+      <label class="td-label">Mois</label>
+      <select name="month" class="td-input" style="margin-bottom:0;">
+        <option value="">—</option>
+        {% for m_num, m_label in mois_choices %}
+        <option value="{{ m_num }}" {% if m_num == selected_month %}selected{% endif %}>{{ m_label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="td-label">Année</label>
+      <input class="td-input" style="margin-bottom:0; width:110px;" type="number" name="year" value="{{ selected_year|default:'' }}" placeholder="2026">
+    </div>
+    <button class="td-btn td-btn-primary">Filtrer</button>
+    {% if selected_date or selected_month %}
+    <a href="{% url 'attendance:alerts' %}" class="td-btn td-btn-outline">✕ Réinitialiser</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="td-card">
+  <table class="td-table">
+    <thead><tr><th>Employé</th><th>Date</th><th>Message</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for a in alerts %}
+      <tr>
+        <td>{{ a.employee }}</td>
+        <td>{{ a.date }}</td>
+        <td style="color:var(--td-text-muted);">{{ a.message }}</td>
+        <td>
+          {% if a.resolved %}<span class="td-badge td-badge-approved">Traitée</span>
+          {% else %}<span class="td-badge td-badge-rejected">Ouverte</span>{% endif %}
+        </td>
+        <td>
+          {% if not a.resolved and user.role == 'RH' or not a.resolved and user.role == 'ADMIN' %}
+          <a href="{% url 'attendance:alert_resolve' a.pk %}" class="td-btn td-btn-outline td-btn-sm">Statuer</a>
+          {% elif not a.resolved %}
+          <span style="color:var(--td-text-muted); font-size:.8rem;">En attente RH</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="td-empty">Aucune alerte {% if selected_date or selected_month %}pour cette période{% else %}🎉{% endif %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

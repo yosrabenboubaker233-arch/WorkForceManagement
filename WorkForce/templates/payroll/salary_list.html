@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block page_title %}Salaires{% endblock %}
+{% block content %}
+<div class="td-card">
+  <table class="td-table">
+    <thead><tr><th>Employé</th><th>Base</th><th>Prime présence</th><th>Transport</th><th>Total</th><th></th></tr></thead>
+    <tbody>
+      {% for e in employees %}
+      <tr>
+        <td style="display:flex; align-items:center; gap:10px;">
+          {% if e.user.avatar %}
+            <img src="{{ e.user.avatar.url }}" alt="" style="width:28px; height:28px; border-radius:50%; object-fit:cover;">
+          {% else %}
+            <div class="td-avatar">{{ e.full_name|first|upper }}</div>
+          {% endif %}
+          {{ e }}
+        </td>
+        {% if e.salary %}
+          <td>{{ e.salary.base_amount }} {{ e.salary.currency }}</td>
+          <td>{{ e.salary.presence_bonus }} {{ e.salary.currency }}</td>
+          <td>{{ e.salary.transport_allowance }} {{ e.salary.currency }}</td>
+          <td><strong>{{ e.salary.total }} {{ e.salary.currency }}</strong></td>
+          <td><a href="{% url 'payroll:detail' e.pk %}">Détail →</a></td>
+        {% else %}
+          <td colspan="4" style="color:var(--td-text-muted);">
+            <span class="td-badge td-badge-muted">Non configuré</span> — compte créé par l'Admin/RH, pas encore intégré au système de paie
+          </td>
+          <td>
+            {% if user.role == 'PAYROLL' or user.role == 'ADMIN' %}
+            <a href="{% url 'payroll:edit' e.pk %}" class="td-btn td-btn-primary td-btn-sm">+ Ajouter au système de paie</a>
+            {% else %}—{% endif %}
+          </td>
+        {% endif %}
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="td-empty">Aucun employé actif.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

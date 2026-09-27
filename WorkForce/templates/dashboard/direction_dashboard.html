@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block page_title %}Espace Direction Générale{% endblock %}
+{% block content %}
+
+<div class="td-grid" style="margin-bottom: 8px;">
+  <div class="td-stat"><div class="td-stat-value">{{ total_employees }}</div><div class="td-stat-label">Employés actifs</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ present_today }}</div><div class="td-stat-label">Présents aujourd'hui</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ absent_today }}</div><div class="td-stat-label">Absents aujourd'hui</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ open_alerts }}</div><div class="td-stat-label">Alertes d'absence ouvertes</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ proposals_pending_direction|length }}</div><div class="td-stat-label">Augmentations à approuver</div></div>
+</div>
+
+<div class="td-card">
+  <div class="td-card-title">👥 Avancement par équipe</div>
+  {% if teams %}
+  <table class="td-table">
+    <thead><tr><th>Manager</th><th>Employés</th><th>Tâches</th><th>Terminées</th><th>En cours</th><th>En retard</th><th>Avancement</th></tr></thead>
+    <tbody>
+      {% for t in teams %}
+      <tr>
+        <td>{{ t.manager }}</td>
+        <td>{{ t.employee_count }}</td>
+        <td>{{ t.total_tasks }}</td>
+        <td>{{ t.done }}</td>
+        <td>{{ t.in_progress }}</td>
+        <td>{% if t.late %}<span style="color:var(--td-danger); font-weight:700;">{{ t.late }}</span>{% else %}0{% endif %}</td>
+        <td style="min-width:160px;">
+          <div class="td-bar-track"><div class="td-bar-fill" style="width:{{ t.completion }}%;"></div></div>
+          <div style="font-size:.75rem; color:var(--td-text-muted); margin-top:2px;">{{ t.completion }} %</div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="td-empty">Aucune équipe avec des tâches assignées pour le moment.</div>
+  {% endif %}
+</div>
+
+<div class="td-alert td-alert-info">
+  ⚠️ {{ late_tasks_total }} tâche(s) en retard sur l'ensemble des équipes · ⚠️ {{ absent_today }} absence(s) aujourd'hui ·
+  🏖️ {{ pending_leaves|length }} congé(s) à valider · 📝 {{ pending_auths|length }} autorisation(s) à valider ·
+  📈 {{ proposals_pending_direction|length }} augmentation(s) à approuver
+</div>
+
+<div class="td-card">
+  <div class="td-card-title">📈 Augmentations de salaire en attente de mon approbation</div>
+  {% if proposals_pending_direction %}
+  <table class="td-table">
+    <thead><tr><th>Employé</th><th>Actuel → Proposé</th><th>Motif</th><th>Validé RH par</th><th></th></tr></thead>
+    <tbody>
+      {% for p in proposals_pending_direction %}
+      <tr>
+        <td>{{ p.employee }}</td>
+        <td>{{ p.current_salary }} → {{ p.proposed_salary }} ({{ p.increase_percentage }}%)</td>
+        <td>{{ p.get_motif_display }}</td>
+        <td>{{ p.rh_reviewed_by|default:"—" }}</td>
+        <td style="display:flex; gap:8px;">
+          <a href="{% url 'payroll:proposal_direction_approve' p.pk %}" class="td-btn td-btn-success td-btn-sm">✓ Approuver</a>
+          <a href="{% url 'payroll:proposal_direction_reject' p.pk %}" class="td-btn td-btn-danger td-btn-sm">✕ Refuser</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="td-empty">Aucune augmentation en attente d'approbation 🎉</div>
+  {% endif %}
+  <a href="{% url 'payroll:proposal_list' %}" class="td-btn td-btn-primary td-btn-sm" style="margin-top:14px;">Voir tout l'historique →</a>
+</div>
+
+<div class="td-card">
+  <div class="td-card-title">🗓️ Congés à valider (Managers, RH, Paie)</div>
+  <table class="td-table">
+    <thead><tr><th>Demandeur</th><th>Rôle</th><th>Période</th><th></th></tr></thead>
+    <tbody>
+      {% for l in pending_leaves %}
+      <tr>
+        <td>{{ l.employee }}</td>
+        <td><span class="td-badge td-badge-info">{{ l.employee.user.get_role_display }}</span></td>
+        <td>{{ l.start_date }} → {{ l.end_date }}</td>
+        <td style="display:flex; gap:8px;">
+          <a href="{% url 'leaves:decide_step1' l.pk 'approve' %}" class="td-btn td-btn-success td-btn-sm">✓ Accepter</a>
+          <a href="{% url 'leaves:decide_step1' l.pk 'reject' %}" class="td-btn td-btn-danger td-btn-sm">✕ Refuser</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="td-empty">Rien en attente 🎉</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="td-card">
+  <div class="td-card-title">🕒 Autorisations à valider (Managers, RH, Paie)</div>
+  <table class="td-table">
+    <thead><tr><th>Demandeur</th><th>Rôle</th><th>Type</th><th>Date</th><th></th></tr></thead>
+    <tbody>
+      {% for a in pending_auths %}
+      <tr>
+        <td>{{ a.employee }}</td>
+        <td><span class="td-badge td-badge-info">{{ a.employee.user.get_role_display }}</span></td>
+        <td>{{ a.get_kind_display }}</td>
+        <td>{{ a.date }} ({{ a.start_time }} → {{ a.end_time }})</td>
+        <td style="display:flex; gap:8px;">
+          <a href="{% url 'leaves:authorization_decide_step1' a.pk 'approve' %}" class="td-btn td-btn-success td-btn-sm">✓ Accepter</a>
+          <a href="{% url 'leaves:authorization_decide_step1' a.pk 'reject' %}" class="td-btn td-btn-danger td-btn-sm">✕ Refuser</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="td-empty">Rien en attente 🎉</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="td-card">
+  <div class="td-card-title">👤 Annuaire des employés (lecture seule)</div>
+  <p style="color:var(--td-text-muted); font-size:.85rem;">Consultez les coordonnées de chacun depuis <a href="{% url 'employees:list' %}">la liste des employés</a>.</p>
+</div>
+
+{% endblock %}

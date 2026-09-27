@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block page_title %}Mes autorisations{% endblock %}
+{% block content %}
+<div class="td-card">
+  <div class="td-stat" style="max-width:280px;">
+    <div class="td-stat-value">{{ cumul_mois|floatformat:1 }} h</div>
+    <div class="td-stat-label">Cumul autorisations ce mois-ci</div>
+  </div>
+</div>
+<div class="td-card">
+  <table class="td-table">
+    <thead><tr><th>Type</th><th>Date</th><th>Horaire</th><th>Durée</th><th>Motif</th><th>Statut</th><th>Détail</th><th></th></tr></thead>
+    <tbody>
+      {% for a in authorizations %}
+      <tr>
+        <td><span class="td-badge td-badge-info">{{ a.get_kind_display }}</span></td>
+        <td>{{ a.date }}</td>
+        <td>{{ a.start_time }} → {{ a.end_time }}</td>
+        <td>{{ a.duration_hours }} h</td>
+        <td>{{ a.reason }}</td>
+        <td>
+          {% if a.status == 'PENDING_STEP1' %}<span class="td-badge td-badge-pending">Attente {{ a.step1_label }}</span>
+          {% elif a.status == 'PENDING_STEP2' %}<span class="td-badge td-badge-pending">Attente RH</span>
+          {% elif a.status == 'APPROVED' %}<span class="td-badge td-badge-approved">Approuvée</span>
+          {% else %}<span class="td-badge td-badge-rejected">Refusée</span>{% endif %}
+        </td>
+        <td style="color:var(--td-text-muted); font-size:.82rem;">
+          {% if a.status == 'REJECTED' %}{{ a.step2_comment|default:a.step1_comment }}
+          {% elif a.status == 'APPROVED' %}
+            {% if a.payroll_status == 'TO_PROCESS' %}Paie : à traiter{% else %}Paie : traité{% endif %}
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if a.status == 'PENDING_STEP1' %}
+          <a href="{% url 'leaves:authorization_edit' a.pk %}" class="td-btn td-btn-outline td-btn-sm">Modifier</a>
+          <a href="{% url 'leaves:authorization_delete' a.pk %}" class="td-btn td-btn-danger td-btn-sm" onclick="return confirm('Supprimer définitivement cette demande ?');">Supprimer</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="td-empty">Aucune demande envoyée.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'leaves:authorization_create' %}" class="td-btn td-btn-primary td-btn-sm" style="margin-top:14px;">+ Nouvelle autorisation</a>
+</div>
+{% endblock %}

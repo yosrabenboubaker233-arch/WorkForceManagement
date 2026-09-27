@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block page_title %}Statuer sur l'absence{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:480px;">
+  <div class="td-card-title" style="margin-top:0;">{{ alert.employee }} — {{ alert.date }}</div>
+  <p style="color:var(--td-text-muted); font-size:.85rem;">{{ alert.message }}</p>
+  <form method="post">
+    {% csrf_token %}
+    <label class="td-label" style="display:flex; align-items:center; gap:8px;">
+      {{ form.justified }} {{ form.justified.label }}
+    </label>
+    <label class="td-label" style="margin-top:10px;">{{ form.treatment.label }}</label>
+    {{ form.treatment }}
+    <button class="td-btn td-btn-primary" style="margin-top:14px;">Enregistrer</button>
+    <a href="{% url 'attendance:alerts' %}" class="td-btn td-btn-outline">Annuler</a>
+  </form>
+</div>
+{% endblock %}

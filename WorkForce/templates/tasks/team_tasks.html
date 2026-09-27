@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block page_title %}Tâches de l'équipe{% endblock %}
+{% block content %}
+<div class="td-card">
+  <table class="td-table">
+    <thead><tr><th>Titre</th><th>Employé</th><th>Échéance</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for t in tasks %}
+      <tr>
+        <td>
+          <a href="{% url 'tasks:detail' t.pk %}" style="color:var(--td-text); font-weight:600;">{{ t.title }}</a>
+        </td>
+        <td>{{ t.employee }}</td>
+        <td>{% if t.is_overdue %}<span style="color:var(--td-danger);">{{ t.due_date }} (en retard)</span>{% else %}{{ t.due_date|default:"—" }}{% endif %}</td>
+        <td>
+          {% if t.status == 'TODO' %}<span class="td-badge td-badge-pending">À faire</span>
+          {% elif t.status == 'IN_PROGRESS' %}<span class="td-badge td-badge-info">En cours</span>
+          {% else %}<span class="td-badge td-badge-approved">Terminée</span>{% endif %}
+        </td>
+        <td style="display:flex; gap:8px;">
+          <a href="{% url 'tasks:edit' t.pk %}" class="td-btn td-btn-outline td-btn-sm">✏️ Modifier</a>
+          <a href="{% url 'tasks:delete' t.pk %}" class="td-btn td-btn-danger td-btn-sm">🗑️ Supprimer</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="td-empty">Aucune tâche assignée à l'équipe.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'tasks:create' %}" class="td-btn td-btn-primary td-btn-sm" style="margin-top:14px;">+ Assigner une tâche</a>
+</div>
+{% endblock %}

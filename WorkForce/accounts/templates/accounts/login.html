@@ -1,0 +1,74 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion — Workforce Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<style>
+  .td-pwd-wrap input { padding-right: 42px; }
+</style>
+</head>
+<body>
+<div class="td-auth-wrap">
+  <div class="td-auth-card">
+    <div class="td-auth-logo">
+      <svg width="36" height="36" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="tdgrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2f7dfd"/>
+            <stop offset="55%" stop-color="#21d4c4"/>
+            <stop offset="100%" stop-color="#3ddc84"/>
+          </linearGradient>
+        </defs>
+        <circle cx="7" cy="10" r="5" fill="url(#tdgrad2)"/>
+        <circle cx="20" cy="26" r="5" fill="url(#tdgrad2)"/>
+        <circle cx="33" cy="10" r="5" fill="url(#tdgrad2)"/>
+        <path d="M7 15 L20 31 L33 15" stroke="url(#tdgrad2)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div style="display:flex; flex-direction:column; line-height:1.05;">
+        <span style="font-weight:800; font-size:1.25rem;">Workforce</span>
+        <span style="font-size:.68rem; letter-spacing:.18em; opacity:.65; font-weight:600;">MANAGEMENT</span>
+      </div>
+    </div>
+    <div class="td-auth-title">Bienvenue</div>
+    <div class="td-auth-subtitle">Connectez-vous pour accéder à votre espace </div>
+
+    {% if form.errors %}
+      <div class="td-alert td-alert-error">Identifiants incorrects. Réessayez.</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <label class="td-label">Nom d'utilisateur</label>
+      {{ form.username }}
+      <label class="td-label">Mot de passe</label>
+      <div class="td-pwd-wrap" style="position:relative;">
+        {{ form.password }}
+        <button type="button" onclick="tdTogglePassword(this)" aria-label="Afficher/masquer le mot de passe"
+          style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--td-text-muted); padding:4px; display:flex;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+      <button type="submit" class="td-btn td-btn-primary" style="width:100%; justify-content:center; padding:12px;">
+        Se connecter
+      </button>
+    </form>
+    <div style="text-align:center; margin-top:16px;">
+      <a href="{% url 'accounts:password_reset' %}" style="font-size:.85rem;">Mot de passe oublié ?</a>
+    </div>
+  </div>
+</div>
+<script>
+function tdTogglePassword(btn) {
+  const input = btn.previousElementSibling;
+  input.type = input.type === "password" ? "text" : "password";
+}
+</script>
+</body>
+</html>

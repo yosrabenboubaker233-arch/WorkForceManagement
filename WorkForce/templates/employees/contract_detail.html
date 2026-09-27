@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block page_title %}Contrat {{ contract.contract_number }}{% endblock %}
+{% block content %}
+
+<div class="td-card" style="max-width:680px;">
+  <div class="td-card-title" style="margin-top:0;">
+    📄 Contrat {{ contract.contract_number }}
+    {% if contract.status == 'ACTIVE' %}<span class="td-badge td-badge-approved">Actif</span>
+    {% elif contract.status == 'SUSPENDED' %}<span class="td-badge td-badge-pending">Suspendu</span>
+    {% else %}<span class="td-badge td-badge-muted">Terminé</span>{% endif %}
+    {% if contract.is_trial_period_active %}<span class="td-badge td-badge-info">Période d'essai</span>{% endif %}
+  </div>
+  <p style="color:var(--td-text-muted); font-size:.82rem; margin-top:-8px;">
+    Consultation en lecture seule. {{ employee.full_name }}
+  </p>
+
+  <div class="td-grid" style="margin-bottom:6px;">
+    <div class="td-stat"><div class="td-stat-value">{{ contract.get_contract_type_display }}</div><div class="td-stat-label">Type de contrat</div></div>
+    <div class="td-stat"><div class="td-stat-value">{{ contract.job_title }}</div><div class="td-stat-label">Poste occupé</div></div>
+    <div class="td-stat"><div class="td-stat-value">{{ contract.department|default:"—" }}</div><div class="td-stat-label">Service</div></div>
+    <div class="td-stat"><div class="td-stat-value">{{ contract.get_work_time_display }}</div><div class="td-stat-label">Temps de travail</div></div>
+  </div>
+
+  <table class="td-table" style="margin-top:16px;">
+    <tbody>
+      <tr><td style="font-weight:600; width:45%;">Date de début</td><td>{{ contract.start_date }}</td></tr>
+      <tr><td style="font-weight:600;">Date de fin</td><td>{% if contract.end_date %}{{ contract.end_date }}{% else %}<em>en cours (durée indéterminée)</em>{% endif %}</td></tr>
+      {% if contract.trial_period_end %}
+      <tr><td style="font-weight:600;">Fin de la période d'essai</td><td>{{ contract.trial_period_end }}</td></tr>
+      {% endif %}
+      <tr><td style="font-weight:600;">Salaire de base</td><td>{{ contract.base_salary }} DT</td></tr>
+      {% if contract.bonuses %}
+      <tr><td style="font-weight:600;">Prime(s)</td><td>{{ contract.bonuses }} DT</td></tr>
+      {% endif %}
+      <tr><td style="font-weight:600;">Heures / semaine</td><td>{{ contract.weekly_hours }} h</td></tr>
+      <tr><td style="font-weight:600;">Heures / jour</td><td>{{ contract.hours_per_day }} h</td></tr>
+      <tr><td style="font-weight:600;">Jours travaillés</td><td>{{ contract.work_days }}</td></tr>
+      {% if contract.status == 'ENDED' and contract.end_reason %}
+      <tr><td style="font-weight:600;">Motif de fin</td><td>{{ contract.end_reason }}</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  {% if contract.document %}
+  <a href="{{ contract.document.url }}" target="_blank" class="td-btn td-btn-outline td-btn-sm" style="margin-top:16px;">📎 Ouvrir le document contractuel (PDF)</a>
+  {% else %}
+  <div class="td-empty" style="margin-top:16px;">Aucun document PDF n'a été joint à ce contrat.</div>
+  {% endif %}
+
+  <div style="margin-top:20px;">
+    <a href="{% url 'employees:detail' employee.pk %}" class="td-btn td-btn-outline td-btn-sm">← Retour au dossier</a>
+    {% if user.role == 'RH' %}
+    <a href="{% url 'employees:contract_edit' contract.id %}" class="td-btn td-btn-primary td-btn-sm">✏️ Modifier</a>
+    <a href="{% url 'employees:contract_delete' contract.id %}" class="td-btn td-btn-danger td-btn-sm" onclick="return confirm('Supprimer définitivement ce contrat ?');">🗑️ Supprimer</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

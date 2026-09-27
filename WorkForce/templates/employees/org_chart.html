@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block page_title %}Organigramme{% endblock %}
+{% block content %}
+{% for m in managers %}
+<div class="td-card">
+  <div class="td-card-title">🧭 {{ m }} <span style="color:var(--td-text-muted); font-weight:400;">— {{ m.job_title }}</span></div>
+  <table class="td-table">
+    <thead><tr><th>Membre d'équipe</th><th>Poste</th><th></th></tr></thead>
+    <tbody>
+      {% for member in m.team_members.all %}
+      <tr><td>{{ member }}</td><td>{{ member.job_title }}</td><td><a href="{% url 'employees:detail' member.pk %}">Voir →</a></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% empty %}
+<div class="td-empty">Aucune hiérarchie définie.</div>
+{% endfor %}
+{% endblock %}

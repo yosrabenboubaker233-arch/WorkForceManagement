@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block page_title %}Supprimer un contrat{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:560px;">
+  <div class="td-card-title" style="margin-top:0;">🗑️ Supprimer le contrat {{ contract.contract_number }}</div>
+  <p>
+    Vous êtes sur le point de supprimer <strong>définitivement</strong> le contrat
+    <strong>{{ contract.contract_number }}</strong> ({{ contract.get_contract_type_display }}) de
+    <strong>{{ employee.full_name }}</strong>, pour la période du {{ contract.start_date }}
+    {% if contract.end_date %}au {{ contract.end_date }}{% else %}(durée indéterminée){% endif %}.
+  </p>
+  <div class="td-alert td-alert-warning">
+    ⚠️ Cette action est <strong>irréversible</strong> et supprime aussi le document joint éventuel.
+    Si ce contrat est réellement arrivé à échéance (fin normale, démission...), utilisez plutôt
+    <strong>« Clôturer »</strong> depuis le dossier employé — ça garde l'historique au lieu de l'effacer.
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <button class="td-btn td-btn-danger">Supprimer définitivement</button>
+    <a href="{% url 'employees:detail' employee.pk %}" class="td-btn td-btn-outline">Annuler</a>
+  </form>
+</div>
+{% endblock %}

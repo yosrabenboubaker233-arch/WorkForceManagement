@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block page_title %}Modifier la politique de paie{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:640px;">
+  <div class="td-card-title" style="margin-top:0;">Politique de paie</div>
+  <p style="color:var(--td-text-muted); font-size:.85rem; margin-top:-8px;">
+    Ces réglages s'appliqueront à toutes les fiches de paie générées à partir de maintenant.
+    Les fiches déjà émises ne sont jamais recalculées rétroactivement.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="td-label">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}<p style="color:var(--td-text-muted); font-size:.78rem; margin:2px 0 8px;">{{ field.help_text }}</p>{% endif %}
+      {% if field.errors %}<div class="td-alert td-alert-error">{{ field.errors|striptags }}</div>{% endif %}
+    {% endfor %}
+
+    <button class="td-btn td-btn-primary" style="margin-top:14px;">Enregistrer</button>
+    <a href="{% url 'payroll:policy_view' %}" class="td-btn td-btn-outline">Annuler</a>
+  </form>
+</div>
+{% endblock %}

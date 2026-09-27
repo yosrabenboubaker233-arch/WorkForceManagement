@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block page_title %}Télécharger les bulletins de paie{% endblock %}
+{% block content %}
+
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0;">📦 Télécharger plusieurs bulletins d'un coup</div>
+  <p style="color:var(--td-text-muted); font-size:.85rem; margin-top:-8px;">
+    Choisissez le mois puis les salariés concernés (ou « Tout sélectionner ») : vous recevrez un fichier
+    ZIP contenant un PDF par salarié. Le mois doit être terminé ; les salariés sans contrat actif ce
+    mois-là sont automatiquement ignorés.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:18px;">
+      <div>
+        <label class="td-label">Mois</label>
+        <select name="month" class="td-input" style="margin-bottom:0;">
+          {% for m_num, m_label in mois_choices %}
+          <option value="{{ m_num }}" {% if m_num == default_month %}selected{% endif %}>{{ m_label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="td-label">Année</label>
+        <input class="td-input" style="margin-bottom:0; width:110px;" type="number" name="year" value="{{ default_year }}">
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <label class="td-label" style="margin:0;">Salariés</label>
+      <div style="display:flex; gap:14px;">
+        <a href="#" onclick="document.querySelectorAll('.td-emp-check').forEach(c=>c.checked=true); return false;">Tout sélectionner</a>
+        <a href="#" onclick="document.querySelectorAll('.td-emp-check').forEach(c=>c.checked=false); return false;">Tout désélectionner</a>
+      </div>
+    </div>
+
+    <div class="td-card" style="max-height:420px; overflow-y:auto; box-shadow:none; border:1px solid var(--td-border); padding:6px 18px;">
+      {% for e in employees %}
+      <label style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--td-border); cursor:pointer;">
+        <input type="checkbox" name="employee_ids" value="{{ e.pk }}" class="td-emp-check">
+        <span>{{ e.full_name }}</span>
+        <span style="color:var(--td-text-muted); font-size:.82rem;">— {{ e.job_title|default:"—" }} · {{ e.department|default:"—" }}</span>
+      </label>
+      {% empty %}
+      <div class="td-empty">Aucun employé actif.</div>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="td-btn td-btn-primary" style="margin-top:18px;">⬇️ Télécharger le ZIP</button>
+  </form>
+</div>
+
+{% endblock %}

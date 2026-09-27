@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block page_title %}Ajouter un événement{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:560px;">
+  <div class="td-card-title">Historique de {{ employee }}</div>
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="td-label">{{ field.label }}</label>
+      {{ field }}
+    {% endfor %}
+    <button class="td-btn td-btn-primary">Ajouter</button>
+  </form>
+</div>
+{% endblock %}

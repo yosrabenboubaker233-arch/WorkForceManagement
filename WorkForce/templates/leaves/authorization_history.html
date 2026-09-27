@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block page_title %}Historique des autorisations{% endblock %}
+{% block content %}
+<div class="td-card">
+  <div style="overflow-x:auto;">
+  <table class="td-table" style="min-width:1000px;">
+    <thead><tr><th>Employé</th><th>Type</th><th>Date</th><th>Horaire</th><th>Statut</th><th>Étape 1</th><th>Étape 2 (RH)</th><th>Paie</th><th>Traitement paie</th></tr></thead>
+    <tbody>
+      {% for a in authorizations %}
+      <tr>
+        <td style="white-space:nowrap;">{{ a.employee }}</td>
+        <td style="white-space:nowrap;">{{ a.get_kind_display }}</td>
+        <td style="white-space:nowrap;">{{ a.date }}</td>
+        <td style="white-space:nowrap;">{{ a.start_time }} → {{ a.end_time }}</td>
+        <td style="white-space:nowrap;">
+          {% if a.status == 'PENDING_STEP1' %}<span class="td-badge td-badge-pending">Attente {{ a.step1_label }}</span>
+          {% elif a.status == 'PENDING_STEP2' %}<span class="td-badge td-badge-pending">Attente RH</span>
+          {% elif a.status == 'APPROVED' %}<span class="td-badge td-badge-approved">Approuvée</span>
+          {% elif a.status == 'EXPIRED' %}<span class="td-badge td-badge-muted">⏱️ Expirée</span>
+          {% else %}<span class="td-badge td-badge-rejected">Refusée</span>{% endif %}
+        </td>
+        <td style="font-size:.82rem; color:var(--td-text-muted); white-space:nowrap;">{{ a.step1_decided_by|default:"—" }}</td>
+        <td style="font-size:.82rem; color:var(--td-text-muted); white-space:nowrap;">{{ a.step2_decided_by|default:"—" }}</td>
+        <td style="white-space:nowrap;">
+          {% if a.status == 'APPROVED' %}
+            {% if a.payroll_status == 'TO_PROCESS' %}<span class="td-badge td-badge-pending">À traiter</span>
+            {% else %}<span class="td-badge td-badge-approved">Traité</span>{% endif %}
+          {% else %}—{% endif %}
+        </td>
+        <td style="white-space:nowrap;">
+          {% if a.treatment == 'DEDUCTIBLE' %}<span class="td-badge td-badge-rejected">Déductible</span>
+          {% elif a.treatment == 'RECOVERABLE' %}<span class="td-badge td-badge-pending">À récupérer</span>
+          {% else %}<span class="td-badge td-badge-approved">Aucune déduction</span>{% endif %}
+          {% if user.role == 'PAYROLL' or user.role == 'RH' or user.role == 'ADMIN' %}
+          <a href="{% url 'leaves:authorization_set_treatment' a.pk %}" style="font-size:.78rem; margin-left:6px; white-space:nowrap;">modifier</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="td-empty">Aucune donnée.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

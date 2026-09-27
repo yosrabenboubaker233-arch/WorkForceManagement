@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block page_title %}{{ title|default:"Assigner une tâche" }}{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:560px;">
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="td-label">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<div class="td-alert td-alert-error">{{ field.errors|striptags }}</div>{% endif %}
+    {% endfor %}
+    <button class="td-btn td-btn-primary">Enregistrer</button>
+  </form>
+</div>
+{% endblock %}

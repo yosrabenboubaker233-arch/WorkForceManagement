@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block page_title %}Pointage{% endblock %}
+{% block content %}
+
+<div class="td-card" style="max-width:480px; text-align:center;">
+
+  <div style="font-size:2.4rem;font-weight:800;background:var(--td-gradient);-webkit-background-clip:text;background-clip:text;color:transparent;">
+      {% now "H:i" %}
+  </div>
+
+  <div style="color:var(--td-text-muted);margin-bottom:20px;">
+      {% now "l d F Y" %}
+  </div>
+
+  <div style="display:flex;justify-content:center;gap:20px;margin-bottom:20px;">
+      <div>
+          <div class="td-label">Arrivée</div>
+          <div style="font-size:1.3rem;font-weight:700;">
+              {{ attendance.check_in|default:"--:--" }}
+          </div>
+      </div>
+
+      <div>
+          <div class="td-label">Départ</div>
+          <div style="font-size:1.3rem;font-weight:700;">
+              {{ attendance.check_out|default:"--:--" }}
+          </div>
+      </div>
+  </div>
+
+  <hr style="margin:20px 0;">
+
+  <div style="text-align:left;">
+
+      <p>
+          <strong>Horaire :</strong>
+          {{ attendance.expected_start|time:"H:i" }}
+          -
+          {{ attendance.expected_end|time:"H:i" }}
+          ({{ attendance.schedule_name }})
+      </p>
+
+      <p>
+          <strong>Pause déjeuner :</strong>
+          {% if attendance.is_summer_schedule %}
+              Aucune (horaire d'été continu)
+          {% else %}
+              1 heure (déduite automatiquement du temps travaillé)
+          {% endif %}
+      </p>
+
+      <p>
+          <strong>Temps travaillé :</strong>
+          {{ attendance.worked_hours }}
+      </p>
+
+  </div>
+
+  {% if attendance.check_in and attendance.check_out %}
+
+      <div class="td-alert td-alert-success">
+          Journée déjà pointée. Temps travaillé : <strong>{{ attendance.worked_hours }}</strong>. À demain 👋
+      </div>
+
+  {% else %}
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+
+          {% if not attendance.check_in %}
+
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="lieu" value="bureau">
+
+            <button type="submit"
+                    name="action"
+                    value="check_in"
+                    class="td-btn td-btn-secondary"
+                    style="width:100%;padding:14px;justify-content:center;">
+                🖥️ Pointer l'arrivée
+            </button>
+          </form>
+
+          {% elif attendance.lieu == "bureau" and not attendance.check_out %}
+
+              <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="lieu" value="bureau">
+                  <button type="submit" name="action" value="check_out"
+                          class="td-btn td-btn-danger"
+                          style="width:100%;padding:14px;justify-content:center;">
+                      🖥️ Pointer le départ
+                  </button>
+              </form>
+
+          {% endif %}
+
+          {% if not attendance.check_in %}
+
+              <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="lieu" value="teletravail">
+                  <button type="submit" name="action" value="check_in"
+                          class="td-btn td-btn-secondary"
+                          style="width:100%;padding:14px;justify-content:center;">
+                      🏠 Pointer l'arrivée (télétravail)
+                  </button>
+              </form>
+
+          {% elif attendance.lieu == "teletravail" and not attendance.check_out %}
+
+              {% if not attendance.pause_start %}
+              <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="lieu" value="teletravail">
+                  <button type="submit" name="action" value="pause_start"
+                          class="td-btn td-btn-outline"
+                          style="width:100%;padding:12px;justify-content:center;">
+                      ⏸️ Commencer ma pause
+                  </button>
+              </form>
+              {% elif not attendance.pause_end %}
+              <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="lieu" value="teletravail">
+                  <button type="submit" name="action" value="pause_end"
+                          class="td-btn td-btn-outline"
+                          style="width:100%;padding:12px;justify-content:center;">
+                      ▶️ Terminer ma pause ({{ attendance.pause_start|time:"H:i" }} → ...)
+                  </button>
+              </form>
+              {% else %}
+              <div class="td-alert td-alert-info" style="text-align:left;">
+                  Pause : {{ attendance.pause_start|time:"H:i" }} → {{ attendance.pause_end|time:"H:i" }}
+              </div>
+              {% endif %}
+
+              <form method="post" enctype="multipart/form-data">
+                  {% csrf_token %}
+                  <input type="hidden" name="lieu" value="teletravail">
+                  <div style="text-align:left; margin-bottom:10px;">
+                    <label class="td-label">📎 Rapport de travail du jour {% if not attendance.rapport_teletravail %}(obligatoire avant de pointer le départ){% endif %}</label>
+                    {% if attendance.rapport_teletravail %}
+                      <div class="td-alert td-alert-success" style="margin:0 0 8px;">
+                        ✅ Rapport déjà déposé : <a href="{{ attendance.rapport_teletravail.url }}" target="_blank">{{ attendance.rapport_teletravail.name|slice:"20:" }}</a>
+                      </div>
+                    {% endif %}
+                    <input type="file" name="rapport" class="td-input">
+                  </div>
+                  <button type="submit" name="action" value="check_out"
+                          class="td-btn td-btn-danger"
+                          style="width:100%;padding:14px;justify-content:center;">
+                      🏠 Pointer le départ (télétravail)
+                  </button>
+              </form>
+
+          {% endif %}
+
+      </div>
+
+  {% endif %}
+
+</div>
+
+<div class="td-card">
+    <div class="td-card-title">Historique (14 derniers jours)</div>
+
+    <table class="td-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Arrivée</th>
+                <th>Départ</th>
+                <th>Pause</th>
+                <th>Horaire</th>
+                <th>Travail</th>
+                <th>Lieu</th>
+                <th>Rapport</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for a in history %}
+            <tr>
+                <td>{{ a.date }}</td>
+                <td>{{ a.check_in|default:"—" }}</td>
+                <td>{{ a.check_out|default:"—" }}</td>
+                <td>
+                    {% if a.pause_start and a.pause_end %}{{ a.pause_start|time:"H:i" }}-{{ a.pause_end|time:"H:i" }}
+                    {% else %}—{% endif %}
+                </td>
+                <td>{{ a.schedule_name }}</td>
+                <td>{{ a.worked_hours }}</td>
+                <td>
+                    {% if a.lieu == "bureau" %}Bureau
+                    {% elif a.lieu == "teletravail" %}Télétravail
+                    {% else %}—{% endif %}
+                </td>
+                <td>
+                    {% if a.rapport_teletravail %}<a href="{{ a.rapport_teletravail.url }}" target="_blank">📎 Voir</a>
+                    {% else %}—{% endif %}
+                </td>
+                <td>
+                    {% if a.status == "PRESENT" %}
+                        <span class="td-badge td-badge-approved">Présent</span>
+                    {% elif a.status == "ABSENT" %}
+                        <span class="td-badge td-badge-rejected">Absent</span>
+                    {% elif a.status == "ON_LEAVE" %}
+                        <span class="td-badge td-badge-info">En congé</span>
+                    {% else %}
+                        <span class="td-badge td-badge-pending">{{ a.get_status_display }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block page_title %}Tableau de bord Paie{% endblock %}
+{% block content %}
+<div class="td-card-title" style="margin-top:0;">💰 Paie — {{ today|date:"F Y" }}</div>
+
+<div class="td-grid">
+  <div class="td-stat"><div class="td-stat-value">{{ nb_employes }}</div><div class="td-stat-label">Employés actifs</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ nb_preparees }}</div><div class="td-stat-label">Paie préparée</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ nb_validees }}</div><div class="td-stat-label">Paie validée</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ nb_en_attente }}</div><div class="td-stat-label">En attente</div></div>
+</div>
+
+{% if nb_proposals_pending %}
+<div class="td-card">
+  <strong>{{ nb_proposals_pending }}</strong> proposition(s) d'augmentation en cours (RH/Direction/Paie) —
+  <a href="{% url 'payroll:proposal_list' %}">voir la file →</a>
+</div>
+{% endif %}
+
+<div class="td-grid">
+  <div class="td-stat"><div class="td-stat-value">{{ total_mass }}</div><div class="td-stat-label">Masse salariale totale / mois</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ total_retenues }}</div><div class="td-stat-label">Total retenues (mois en cours)</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ net_a_payer }}</div><div class="td-stat-label">Net à payer (mois en cours)</div></div>
+</div>
+
+<div class="td-card">
+  <div class="td-card-title">Détail par employé</div>
+  <table class="td-table">
+    <thead><tr><th>Employé</th><th>Total mensuel</th></tr></thead>
+    <tbody>
+      {% for s in salaries %}
+      <tr><td><a href="{% url 'payroll:detail' s.employee.pk %}">{{ s.employee }}</a></td><td>{{ s.total }} {{ s.currency }}</td></tr>
+      {% empty %}
+      <tr><td colspan="2" class="td-empty">Aucune fiche salariale.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

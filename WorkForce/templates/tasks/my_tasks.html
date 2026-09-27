@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block page_title %}Mes tâches{% endblock %}
+{% block content %}
+<div class="td-card">
+  <table class="td-table">
+    <thead><tr><th>Titre</th><th>Échéance</th><th>Assignée par</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for t in tasks %}
+      <tr>
+        <td>{{ t.title }}</td>
+        <td>{% if t.is_overdue %}<span style="color:var(--td-danger);">{{ t.due_date }} (en retard)</span>{% else %}{{ t.due_date|default:"—" }}{% endif %}</td>
+        <td>{{ t.assigned_by|default:"—" }}</td>
+        <td>
+          {% if t.status == 'TODO' %}<span class="td-badge td-badge-pending">À faire</span>
+          {% elif t.status == 'IN_PROGRESS' %}<span class="td-badge td-badge-info">En cours</span>
+          {% else %}<span class="td-badge td-badge-approved">Terminée</span>{% endif %}
+        </td>
+        <td><a href="{% url 'tasks:detail' t.pk %}">Ouvrir →</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="td-empty">Aucune tâche assignée pour le moment.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

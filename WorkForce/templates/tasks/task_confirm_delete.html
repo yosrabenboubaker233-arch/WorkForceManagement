@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block page_title %}Supprimer la tâche{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:480px;">
+  <div class="td-alert td-alert-error">
+    ⚠️ Supprimer « {{ task.title }} » (assignée à {{ task.employee }}) est définitif — les commentaires liés seront aussi supprimés.
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <button class="td-btn td-btn-danger">Confirmer la suppression</button>
+    <a href="{% url 'tasks:team_tasks' %}" class="td-btn td-btn-outline">Annuler</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block page_title %}Barème de paie{% endblock %}
+{% block content %}
+
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <span>Barème actuellement en vigueur</span>
+    {% if user.role == 'PAYROLL' %}
+    <a href="{% url 'payroll:rate_create' %}" class="td-btn td-btn-primary td-btn-sm">+ Nouveau barème</a>
+    {% endif %}
+  </div>
+
+  {% if active %}
+  <div class="td-grid">
+    <div class="td-stat"><div class="td-stat-value">{{ active.effective_date }}</div><div class="td-stat-label">Date d'effet</div></div>
+    <div class="td-stat"><div class="td-stat-value">{{ active.cnss_rate }}%</div><div class="td-stat-label">Taux CNSS salarié</div></div>
+    <div class="td-stat"><div class="td-stat-value">{{ active.css_rate }}%</div><div class="td-stat-label">Taux CSS salarié</div></div>
+  </div>
+  <table class="td-table" style="margin-top:14px;">
+    <thead><tr><th>Tranche IRPP (plafond annuel)</th><th>Taux</th></tr></thead>
+    <tbody>
+      {% for b in active.brackets.all %}
+      <tr>
+        <td>{% if b.upper_bound %}Jusqu'à {{ b.upper_bound }} TND{% else %}Au-delà{% endif %}</td>
+        <td>{{ b.rate }}%</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="2" class="td-empty">Aucune tranche IRPP définie pour ce barème — le calcul utilisera le barème de secours par défaut.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if active.reference %}<p style="color:var(--td-text-muted); font-size:.85rem; margin-top:10px;">Référence : {{ active.reference }}</p>{% endif %}
+  {% else %}
+  <p style="color:var(--td-text-muted);">Aucun barème n'a encore été configuré. Les bulletins de paie utilisent temporairement les valeurs de secours définies dans les paramètres techniques.</p>
+  {% endif %}
+</div>
+
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0;">Historique des barèmes</div>
+  <table class="td-table">
+    <thead><tr><th>Date d'effet</th><th>CNSS</th><th>CSS</th><th>Tranches IRPP</th><th>Référence</th><th>Saisi par</th></tr></thead>
+    <tbody>
+      {% for rs in rate_sets %}
+      <tr {% if rs.pk == active.pk %}style="outline:2px solid var(--td-blue);"{% endif %}>
+        <td>{{ rs.effective_date }} {% if rs.pk == active.pk %}<span class="td-badge td-badge-approved">Actif</span>{% endif %}</td>
+        <td>{{ rs.cnss_rate }}%</td>
+        <td>{{ rs.css_rate }}%</td>
+        <td>{{ rs.brackets.count }} tranche(s)</td>
+        <td style="color:var(--td-text-muted); font-size:.85rem;">{{ rs.reference|default:"—" }}</td>
+        <td style="font-size:.85rem;">{{ rs.created_by.get_full_name|default:rs.created_by.username|default:"—" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="td-empty">Aucun barème enregistré.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

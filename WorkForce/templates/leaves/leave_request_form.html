@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block page_title %}{% if editing %}Modifier ma demande de congé{% else %}Nouvelle demande de congé{% endif %}{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:600px;">
+  <div class="td-card-title">Solde disponible : {{ employee.leave_balance_days }} jours</div>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="td-label">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<div class="td-alert td-alert-error">{{ field.errors|striptags }}</div>{% endif %}
+    {% endfor %}
+    {% if form.non_field_errors %}<div class="td-alert td-alert-error">{{ form.non_field_errors|striptags }}</div>{% endif %}
+    <button class="td-btn td-btn-primary">{% if editing %}Enregistrer les modifications{% else %}Envoyer la demande à mon manager{% endif %}</button>
+  </form>
+</div>
+{% endblock %}

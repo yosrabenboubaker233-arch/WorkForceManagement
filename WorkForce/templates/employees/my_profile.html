@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block page_title %}Mon profil{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:560px;">
+  <div class="td-card-title">
+    Informations personnelles
+    {% if employee.user.avatar %}
+    <img src="{{ employee.user.avatar.url }}" alt="Photo" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+    {% endif %}
+  </div>
+  <p style="color:var(--td-text-muted); font-size:.82rem;">
+    Poste, service, salaire, contrat, date d'embauche et manager sont gérés uniquement par la RH — voir votre
+    <a href="{% url 'employees:detail' employee.pk %}">dossier employé</a>.
+  </p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="td-label">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<div class="td-alert td-alert-error">{{ field.errors|striptags }}</div>{% endif %}
+    {% endfor %}
+    <button class="td-btn td-btn-primary">Enregistrer</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block page_title %}Mes présences{% endblock %}
+{% block content %}
+
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0;">🔍 Rechercher par date</div>
+  <form method="get" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div>
+      <label class="td-label">Du</label>
+      <input class="td-input" style="margin-bottom:0;" type="date" name="date_debut" value="{{ date_debut|date:'Y-m-d' }}">
+    </div>
+    <div>
+      <label class="td-label">Au</label>
+      <input class="td-input" style="margin-bottom:0;" type="date" name="date_fin" value="{{ date_fin|date:'Y-m-d' }}">
+    </div>
+    <button class="td-btn td-btn-primary">Rechercher</button>
+  </form>
+</div>
+
+<div class="td-grid">
+  <div class="td-stat"><div class="td-stat-value">{{ nb_present }}</div><div class="td-stat-label">Présent(e)</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ nb_retard }}</div><div class="td-stat-label">En retard</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ nb_absent }}</div><div class="td-stat-label">Absent(e)</div></div>
+</div>
+
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0;">Résultats du {{ date_debut|date:"d/m/Y" }} au {{ date_fin|date:"d/m/Y" }}</div>
+  <table class="td-table">
+    <thead>
+      <tr>
+        <th>Date</th><th>Arrivée</th><th>Départ</th><th>Pause</th><th>Horaire</th><th>Travail</th><th>Lieu</th><th>Rapport</th><th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in records %}
+      <tr>
+        <td>{{ a.date }}</td>
+        <td>{{ a.check_in|default:"—" }}</td>
+        <td>{{ a.check_out|default:"—" }}</td>
+        <td>
+          {% if a.pause_start and a.pause_end %}{{ a.pause_start|time:"H:i" }}-{{ a.pause_end|time:"H:i" }}
+          {% else %}—{% endif %}
+        </td>
+        <td>{{ a.schedule_name }}</td>
+        <td>{{ a.worked_hours }}</td>
+        <td>
+          {% if a.lieu == "bureau" %}Bureau
+          {% elif a.lieu == "teletravail" %}Télétravail
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if a.rapport_teletravail %}<a href="{{ a.rapport_teletravail.url }}" target="_blank">📎 Voir</a>
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if a.status == "PRESENT" %}<span class="td-badge td-badge-approved">Présent</span>
+          {% elif a.status == "LATE" %}<span class="td-badge td-badge-pending">En retard</span>
+          {% elif a.status == "ABSENT" %}<span class="td-badge td-badge-rejected">Absent</span>
+          {% elif a.status == "ON_LEAVE" %}<span class="td-badge td-badge-info">En congé</span>
+          {% else %}<span class="td-badge td-badge-muted">{{ a.get_status_display }}</span>{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="td-empty">Aucun pointage sur cette période.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

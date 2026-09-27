@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block page_title %}Nouveau barème de paie{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:720px;">
+  <div class="td-card-title" style="margin-top:0;">Nouveau barème (CNSS / CSS / IRPP)</div>
+  <p style="color:var(--td-text-muted); font-size:.85rem; margin-top:-8px;">
+    Le nouveau barème s'appliquera à tous les bulletins de paie dont la période est égale ou
+    postérieure à la date d'effet choisie. L'ancien barème reste consultable dans l'historique.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="td-label">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<div class="td-alert td-alert-error">{{ field.errors|striptags }}</div>{% endif %}
+    {% endfor %}
+
+    <div class="td-card-title" style="margin-top:20px;">Tranches IRPP (barème progressif)</div>
+    <p style="color:var(--td-text-muted); font-size:.8rem; margin-top:-6px;">
+      Laissez « Plafond » vide sur une ligne pour désigner la dernière tranche (au-delà, sans limite).
+    </p>
+    {{ formset.management_form }}
+    {% for bracket_form in formset %}
+      <div style="display:flex; gap:10px; align-items:flex-start; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--td-border);">
+        {% for field in bracket_form.visible_fields %}
+          <div>
+            <label class="td-label" style="font-size:.75rem;">{{ field.label }}</label>
+            {{ field }}
+          </div>
+        {% endfor %}
+        {% for hidden in bracket_form.hidden_fields %}{{ hidden }}{% endfor %}
+      </div>
+      {% if bracket_form.errors %}<div class="td-alert td-alert-error">{{ bracket_form.errors }}</div>{% endif %}
+    {% endfor %}
+
+    <button class="td-btn td-btn-primary" style="margin-top:14px;">Enregistrer le nouveau barème</button>
+    <a href="{% url 'payroll:rates_list' %}" class="td-btn td-btn-outline">Annuler</a>
+  </form>
+</div>
+{% endblock %}

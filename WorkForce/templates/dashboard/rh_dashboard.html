@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block page_title %}Espace RH{% endblock %}
+{% block content %}
+
+<div class="td-grid">
+  <div class="td-stat">
+    <div class="td-stat-value">{{ total_employees }}</div>
+    <div class="td-stat-label">Employés au total</div>
+  </div>
+  <div class="td-stat">
+    <div class="td-stat-value">{{ pending_leaves }}</div>
+    <div class="td-stat-label">Congés en attente</div>
+  </div>
+  <div class="td-stat">
+    <div class="td-stat-value">{{ today_absences }}</div>
+    <div class="td-stat-label">Absences aujourd'hui</div>
+  </div>
+  <div class="td-stat">
+    <div class="td-stat-value">{{ open_alerts }}</div>
+    <div class="td-stat-label">Alertes ouvertes</div>
+  </div>
+  <div class="td-stat">
+    <div class="td-stat-value">{{ proposals_pending_rh }}</div>
+    <div class="td-stat-label">Augmentations à valider (RH)</div>
+  </div>
+</div>
+
+{% if proposals_pending_rh %}
+<div class="td-alert td-alert-warning" style="margin-top:14px;">
+  📈 {{ proposals_pending_rh }} proposition(s) d'augmentation en attente de votre validation budgétaire.
+  <a href="{% url 'payroll:proposal_list' %}" style="font-weight:700;">Traiter maintenant →</a>
+</div>
+{% endif %}
+
+<div class="td-card" style="margin-top:22px;">
+  <div class="td-card-title">Accès rapides</div>
+  <div style="display:flex; gap:12px; flex-wrap:wrap;">
+    <a href="{% url 'employees:list' %}" class="td-btn td-btn-outline">👤 Gérer les employés</a>
+    <a href="{% url 'employees:create' %}" class="td-btn td-btn-outline">➕ Ajouter un employé</a>
+    <a href="{% url 'leaves:history' %}" class="td-btn td-btn-outline">🗂️ Historique des congés</a>
+    <a href="{% url 'attendance:team_dashboard' %}" class="td-btn td-btn-outline">🕒 Présences du jour</a>
+    <a href="{% url 'attendance:alerts' %}" class="td-btn td-btn-outline">⚠️ Alertes d'absence</a>
+    <a href="{% url 'payroll:overview' %}" class="td-btn td-btn-outline">💰 Masse salariale</a>
+    <a href="{% url 'payroll:proposal_list' %}" class="td-btn td-btn-outline">📈 Augmentations à valider ({{ proposals_pending_rh }})</a>
+    <a href="{% url 'employees:org_chart' %}" class="td-btn td-btn-outline">🧭 Organigramme</a>
+    <a href="{% url 'leaves:my_requests' %}" class="td-btn td-btn-outline">🏖️ Mes demandes de congé</a>
+    <a href="{% url 'leaves:my_authorizations' %}" class="td-btn td-btn-outline">📝 Mes autorisations</a>
+    <a href="{% url 'payroll:queue' %}" class="td-btn td-btn-outline">💳 File d'attente Paie</a>
+  </div>
+</div>
+
+{% endblock %}

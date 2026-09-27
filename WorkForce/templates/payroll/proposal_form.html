@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block page_title %}Proposer une augmentation{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:600px;">
+  <div class="td-card-title" style="margin-top:0;">{{ employee }} — salaire actuel : {{ salary.base_amount }} {{ salary.currency }}</div>
+  <p style="color:var(--td-text-muted); font-size:.85rem; margin-top:-8px;">
+    Cette proposition sera d'abord envoyée à la RH pour validation, puis à la Direction pour
+    approbation, avant que la Paie ne l'applique. Rien n'est modifié tant que les 3 étapes
+    ne sont pas franchies.<br>
+    « Pourcentage » : la valeur saisie est le taux d'augmentation (ex : 10 pour +10%).<br>
+    « Montant fixe » : la valeur saisie est directement le nouveau salaire cible.
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="td-label">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<div class="td-alert td-alert-error">{{ field.errors|striptags }}</div>{% endif %}
+    {% endfor %}
+    <button class="td-btn td-btn-primary">Envoyer la proposition à la RH</button>
+    <a href="{% url 'payroll:detail' employee.pk %}" class="td-btn td-btn-outline">Annuler</a>
+  </form>
+</div>
+{% endblock %}

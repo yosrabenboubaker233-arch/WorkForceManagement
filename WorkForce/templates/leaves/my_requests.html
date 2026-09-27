@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block page_title %}Mes demandes de congé{% endblock %}
+{% block content %}
+<div class="td-card">
+  <table class="td-table">
+    <thead><tr><th>Période</th><th>Jours</th><th>Type</th><th>Statut</th><th>Détail</th><th></th></tr></thead>
+    <tbody>
+      {% for l in leaves %}
+      <tr>
+        <td>{{ l.start_date }} → {{ l.end_date }}</td>
+        <td>{{ l.nb_days }}</td>
+        <td>{{ l.leave_type }}</td>
+        <td>
+          {% if l.status == 'PENDING_STEP1' %}<span class="td-badge td-badge-pending">Attente {{ l.step1_label }}</span>
+          {% elif l.status == 'PENDING_STEP2' %}<span class="td-badge td-badge-pending">Attente RH</span>
+          {% elif l.status == 'APPROVED' %}<span class="td-badge td-badge-approved">Approuvée</span>
+          {% elif l.status == 'REJECTED' %}<span class="td-badge td-badge-rejected">Refusée</span>
+          {% elif l.status == 'EXPIRED' %}<span class="td-badge td-badge-muted">⏱️ Expirée</span>
+          {% else %}<span class="td-badge td-badge-muted">Annulée</span>{% endif %}
+        </td>
+        <td style="color:var(--td-text-muted); font-size:.82rem;">
+          {% if l.status == 'REJECTED' %}{{ l.step2_comment|default:l.step1_comment }}
+          {% elif l.status == 'APPROVED' %}
+            {% if l.payroll_status == 'TO_PROCESS' %}Paie : à traiter{% else %}Paie : traité{% endif %}
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if l.status == 'PENDING_STEP1' %}
+          <a href="{% url 'leaves:edit' l.pk %}" class="td-btn td-btn-outline td-btn-sm">Modifier</a>
+          <a href="{% url 'leaves:cancel' l.pk %}" class="td-btn td-btn-outline td-btn-sm">Annuler</a>
+          <a href="{% url 'leaves:delete' l.pk %}" class="td-btn td-btn-danger td-btn-sm" onclick="return confirm('Supprimer définitivement cette demande ?');">Supprimer</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="td-empty">Aucune demande envoyée.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'leaves:create' %}" class="td-btn td-btn-primary td-btn-sm" style="margin-top:14px;">+ Nouvelle demande</a>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block page_title %}Valider la proposition{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:560px;">
+  <div class="td-card-title" style="margin-top:0;">Valider pour {{ proposal.employee }}</div>
+  <p>
+    {{ proposal.current_salary }} → {{ proposal.proposed_salary }} ({{ proposal.increase_percentage }}%)<br>
+    Motif : {{ proposal.get_motif_display }} — proposé par {{ proposal.proposed_by }}<br>
+    « {{ proposal.reason|default:"—" }} »
+  </p>
+  <p style="color:var(--td-text-muted); font-size:.85rem;">
+    Après votre validation, la proposition sera transmise à la Direction pour approbation finale.
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="td-label">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<div class="td-alert td-alert-error">{{ field.errors|striptags }}</div>{% endif %}
+    {% endfor %}
+    <button class="td-btn td-btn-primary">Valider et transmettre à la Direction</button>
+    <a href="{% url 'payroll:proposal_list' %}" class="td-btn td-btn-outline">Annuler</a>
+  </form>
+</div>
+{% endblock %}

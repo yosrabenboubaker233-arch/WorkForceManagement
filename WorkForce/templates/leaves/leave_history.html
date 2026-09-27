@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block page_title %}Historique global des congés{% endblock %}
+{% block content %}
+<div class="td-card">
+  <table class="td-table">
+    <thead><tr><th>Employé</th><th>Période</th><th>Type</th><th>Statut</th><th>Étape 1</th><th>Étape 2 (RH)</th><th>Paie</th></tr></thead>
+    <tbody>
+      {% for l in leaves %}
+      <tr>
+        <td>{{ l.employee }}</td>
+        <td>{{ l.start_date }} → {{ l.end_date }}</td>
+        <td>{{ l.leave_type }}</td>
+        <td>
+          {% if l.status == 'PENDING_STEP1' %}<span class="td-badge td-badge-pending">Attente {{ l.step1_label }}</span>
+          {% elif l.status == 'PENDING_STEP2' %}<span class="td-badge td-badge-pending">Attente RH</span>
+          {% elif l.status == 'APPROVED' %}<span class="td-badge td-badge-approved">Approuvée</span>
+          {% elif l.status == 'REJECTED' %}<span class="td-badge td-badge-rejected">Refusée</span>
+          {% elif l.status == 'EXPIRED' %}<span class="td-badge td-badge-muted">⏱️ Expirée</span>
+          {% else %}<span class="td-badge td-badge-muted">Annulée</span>{% endif %}
+        </td>
+        <td style="font-size:.82rem; color:var(--td-text-muted);">{{ l.step1_decided_by|default:"—" }}</td>
+        <td style="font-size:.82rem; color:var(--td-text-muted);">{{ l.step2_decided_by|default:"—" }}</td>
+        <td>
+          {% if l.status == 'APPROVED' %}
+            {% if l.payroll_status == 'TO_PROCESS' %}<span class="td-badge td-badge-pending">À traiter</span>
+            {% else %}<span class="td-badge td-badge-approved">Traité</span>{% endif %}
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="td-empty">Aucune donnée.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

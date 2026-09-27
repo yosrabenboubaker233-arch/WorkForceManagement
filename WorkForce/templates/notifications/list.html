@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block page_title %}Notifications{% endblock %}
+{% block content %}
+<div class="td-card">
+  {% for n in notifications %}
+  <a href="{% url 'notifications:open' n.pk %}" style="display:block; padding:12px 0; border-bottom:1px solid var(--td-border); color:var(--td-text);">
+    <div style="display:flex; justify-content:space-between;">
+      <strong>{{ n.title }}</strong>
+      <span style="color:var(--td-text-muted); font-size:.78rem;">{{ n.created_at|timesince }}</span>
+    </div>
+    <div style="color:var(--td-text-muted); font-size:.88rem;">{{ n.message }}</div>
+  </a>
+  {% empty %}
+  <div class="td-empty">Aucune notification.</div>
+  {% endfor %}
+</div>
+{% endblock %}

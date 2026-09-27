@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block page_title %}Traiter la demande{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:560px;">
+  <div class="td-card-title">
+    {{ leave.employee }} — {{ leave.start_date }} → {{ leave.end_date }} ({{ leave.nb_days }} jours)
+  </div>
+  <p style="color:var(--td-text-muted);">Motif de l'employé : {{ leave.reason|default:"—" }}</p>
+  <p style="font-size:.82rem;">
+    {% if step == 1 %}
+      Étape 1 sur {% if leave.step2_required %}2{% else %}1{% endif %} — approbateur : {{ leave.step1_label }}
+    {% else %}
+      Étape 2 sur 2 — validation RH. Déjà approuvée en étape 1 par {{ leave.step1_decided_by }}
+      {% if leave.step1_comment %}(commentaire : {{ leave.step1_comment }}){% endif %}.
+    {% endif %}
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <label class="td-label">Commentaire {% if decision == 'reject' %}(obligatoire){% endif %}</label>
+    {{ form.comment }}
+    {% if decision == 'approve' %}
+      <button class="td-btn td-btn-success">✓ Confirmer l'acceptation</button>
+    {% else %}
+      <button class="td-btn td-btn-danger">✕ Confirmer le refus</button>
+    {% endif %}
+    <a href="{% url 'leaves:validation_inbox' %}" class="td-btn td-btn-outline">Annuler</a>
+  </form>
+</div>
+{% endblock %}

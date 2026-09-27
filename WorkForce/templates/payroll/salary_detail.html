@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block page_title %}Rémunération — {{ employee }}{% endblock %}
+{% block content %}
+
+{% if not salary %}
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0;">⚠️ Employé pas encore intégré au système de paie</div>
+  <p>Le compte de {{ employee }} a été créé par l'Admin/RH, mais aucun salaire de base n'a encore été défini.</p>
+  {% if user.role == 'PAYROLL' or user.role == 'ADMIN' %}
+  <a href="{% url 'payroll:edit' employee.pk %}" class="td-btn td-btn-primary td-btn-sm">+ Ajouter au système de paie</a>
+  {% else %}
+  <p style="color:var(--td-text-muted); font-size:.85rem;">La Paie doit d'abord lui définir un salaire de base.</p>
+  {% endif %}
+</div>
+{% else %}
+
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0;">🔍 Voir / télécharger le bulletin d'un mois précis</div>
+  <form method="get" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div>
+      <label class="td-label">Mois</label>
+      <select name="month" class="td-input" style="margin-bottom:0;">
+        {% for m_num, m_label in mois_choices %}
+        <option value="{{ m_num }}" {% if m_num == selected_month %}selected{% endif %}>{{ m_label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="td-label">Année</label>
+      <input class="td-input" style="margin-bottom:0; width:110px;" type="number" name="year" value="{{ selected_year }}">
+    </div>
+    <button class="td-btn td-btn-primary">Afficher</button>
+    <a href="{% url 'payroll:payslip_export' employee.pk %}?month={{ selected_month }}&year={{ selected_year }}" class="td-btn td-btn-outline">⬇️ Télécharger ce mois (PDF)</a>
+  </form>
+  {% if is_future_month %}
+  <div class="td-alert td-alert-error" style="margin-top:12px;">Ce mois est dans le futur : aucun bulletin ne peut encore être généré.</div>
+  {% endif %}
+</div>
+
+<div class="td-grid">
+  <div class="td-stat"><div class="td-stat-value">{{ salary.base_amount }}</div><div class="td-stat-label">Salaire de base ({{ salary.currency }})</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ salary.presence_bonus }}</div><div class="td-stat-label">Prime de présence</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ salary.transport_allowance }}</div><div class="td-stat-label">Indemnité transport</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ salary.total }}</div><div class="td-stat-label">Total mensuel</div></div>
+  {% if payslip_preview %}
+  <div class="td-stat"><div class="td-stat-value">{{ payslip_preview.heures_sup }} h</div><div class="td-stat-label">Heures sup. ({{ payslip_preview.mois_annee }})</div></div>
+  {% endif %}
+</div>
+
+{% if payslip_preview %}
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0;">Détail pour {{ payslip_preview.mois_annee }}</div>
+  {% if payslip_preview.hors_contrat %}
+  <div class="td-alert td-alert-error">
+    ⛔ {{ employee }} n'avait <strong>aucun contrat actif</strong> durant {{ payslip_preview.mois_annee }}
+    (mois antérieur à l'embauche, ou entre deux contrats). Aucun bulletin ne peut être généré pour ce mois :
+    tous les montants ci-dessous sont forcés à zéro pour éviter tout paiement erroné.
+  </div>
+  {% else %}
+  <p style="color:var(--td-text-muted); font-size:.85rem; margin-top:-8px;">
+    {% if selected_month == today_month and selected_year == today_year %}
+    Estimation à date, sur la base du pointage déjà enregistré ce mois-ci — non figée tant que le bulletin n'est pas généré.
+    {% else %}
+    Calcul basé sur le pointage enregistré pour ce mois.
+    {% endif %}
+  </p>
+  {% if jours_couverts and jours_total_mois and jours_couverts < jours_total_mois %}
+  <div class="td-alert td-alert-info">
+    ℹ️ Le contrat de {{ employee }} n'a couvert que {{ jours_couverts }} jour(s) sur {{ jours_total_mois }} ce mois-ci
+    (contrat démarré ou terminé en cours de mois) : les heures prévues ci-dessous sont donc calculées
+    au prorata, pas sur un mois complet.
+  </div>
+  {% endif %}
+  {% endif %}
+  <table class="td-table">
+    <tbody>
+      <tr><th>Heures prévues du mois</th><td>{{ payslip_preview.heures_prevues }} h</td></tr>
+      <tr><th>Heures travaillées</th><td>{{ payslip_preview.heures_travaillees }} h</td></tr>
+      <tr><th>Taux horaire</th><td>{{ payslip_preview.taux_horaire }} {{ salary.currency }}/h</td></tr>
+      <tr><th>Heures normales</th><td>{{ payslip_preview.heures_normales }} h</td></tr>
+      <tr><th>Heures sup. taux 1</th><td>{{ payslip_preview.heures_sup_tier1 }} h</td></tr>
+      <tr><th>Heures sup. taux 2</th><td>{{ payslip_preview.heures_sup_tier2 }} h</td></tr>
+      {% if payslip_preview.heures_jour_ferie %}<tr><th>Heures jour férié travaillé</th><td>{{ payslip_preview.heures_jour_ferie }} h</td></tr>{% endif %}
+      {% if payslip_preview.heures_jour_repos %}<tr><th>Heures jour de repos travaillé</th><td>{{ payslip_preview.heures_jour_repos }} h</td></tr>{% endif %}
+      {% if payslip_preview.heures_a_recuperer_travail %}<tr><th>Heures à récupérer (travail jour de repos)</th><td>{{ payslip_preview.heures_a_recuperer_travail }} h</td></tr>{% endif %}
+      <tr><th>Montant heures sup.</th><td>{{ payslip_preview.montant_heures_sup }} {{ salary.currency }}</td></tr>
+      <tr><th>Retenue absences</th><td>{{ payslip_preview.retenue_absences }} {{ salary.currency }}</td></tr>
+      {% if payslip_preview.heures_a_recuperer_absence %}<tr><th>Heures d'absence à récupérer</th><td>{{ payslip_preview.heures_a_recuperer_absence }} h</td></tr>{% endif %}
+      {% if payslip_preview.heures_absence_non_deduites %}<tr><th>Heures d'absence non déduites (congé payé...)</th><td>{{ payslip_preview.heures_absence_non_deduites }} h</td></tr>{% endif %}
+    </tbody>
+  </table>
+
+  {% if payslip_preview.absence_details %}
+  <div class="td-card-title" style="margin-top:16px;">Détail des absences du mois</div>
+  <table class="td-table">
+    <thead><tr><th>Date</th><th>Heures</th><th>Motif</th><th>Traitement</th></tr></thead>
+    <tbody>
+      {% for d in payslip_preview.absence_details %}
+      <tr>
+        <td>{{ d.date }}</td><td>{{ d.hours }} h</td><td>{{ d.reason }}</td>
+        <td>
+          {% if d.treatment == 'DEDUCTIBLE' %}<span class="td-badge td-badge-rejected">Déductible</span>
+          {% elif d.treatment == 'RECOVERABLE' %}<span class="td-badge td-badge-pending">À récupérer</span>
+          {% else %}<span class="td-badge td-badge-approved">Aucune déduction</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if payslip_preview.alertes_heures_sup %}
+  <div class="td-alert td-alert-warning" style="margin-top:14px;">
+    ⚠️ Limite interne d'heures supplémentaires dépassée sur :
+    {% for a in payslip_preview.alertes_heures_sup %}{{ a.week_start }}–{{ a.week_end }} ({{ a.overtime_hours }}h, limite {{ a.limit_hours }}h){% if not forloop.last %}, {% endif %}{% endfor %}.
+    Une validation RH est recommandée.
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="td-card" style="display:flex; gap:10px; flex-wrap:wrap;">
+  <a href="{% url 'payroll:payslip_export' employee.pk %}?month={{ selected_month }}&year={{ selected_year }}" class="td-btn td-btn-primary td-btn-sm">⬇️ Télécharger le bulletin de paie sélectionné (PDF)</a>
+  {% if user.role == 'PAYROLL' or user.role == 'ADMIN' %}
+  <a href="{% url 'payroll:edit' employee.pk %}" class="td-btn td-btn-outline td-btn-sm">✏️ Modifier la composition du salaire</a>
+  {% endif %}
+  {% if can_propose %}
+  <a href="{% url 'payroll:proposal_create' employee.pk %}" class="td-btn td-btn-outline td-btn-sm">📈 Proposer une augmentation</a>
+  {% endif %}
+</div>
+
+{% if pending_proposals %}
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0;">⏳ Proposition(s) d'augmentation en cours</div>
+  {% for p in pending_proposals %}
+  <p>
+    {{ p.current_salary }} → {{ p.proposed_salary }} ({{ p.increase_percentage }}%) — {{ p.get_motif_display }}<br>
+    Proposé par {{ p.proposed_by }} le {{ p.proposed_at|date:"d/m/Y" }}
+    {% if p.status == 'PENDING_RH' %}<span class="td-badge td-badge-pending">En attente RH</span>
+    {% elif p.status == 'PENDING_DIRECTION' %}<span class="td-badge td-badge-info">En attente Direction</span>
+    {% elif p.status == 'APPROVED' %}<span class="td-badge td-badge-info">Approuvée — à appliquer</span>{% endif %}
+  </p>
+  {% endfor %}
+  <a href="{% url 'payroll:proposal_list' %}" class="td-btn td-btn-outline td-btn-sm">Voir dans la file →</a>
+</div>
+{% endif %}
+
+<div class="td-card">
+  <div class="td-card-title">📄 Bulletins générés</div>
+  <table class="td-table">
+    <thead><tr><th>Période</th><th>Brut</th><th>Retenues</th><th>Net</th><th>Statut</th></tr></thead>
+    <tbody>
+      {% for p in payslips %}
+      <tr>
+        <td>{{ p.month }}/{{ p.year }}</td>
+        <td>{{ p.gross_amount }}</td>
+        <td>{{ p.deductions_amount }}</td>
+        <td><strong>{{ p.net_amount }}</strong></td>
+        <td>
+          {% if p.status == 'VALIDATED' %}<span class="td-badge td-badge-approved">Validée</span>
+          {% else %}
+            <span class="td-badge td-badge-muted">Préparée</span>
+            {% if p.nb_conges_attente or p.nb_autorisations_attente %}
+              <span class="td-badge td-badge-pending" title="La validation sera refusée tant que ces éléments ne sont pas marqués « Traité » dans la file d'attente Paie.">
+                ⚠️ {{ p.nb_conges_attente }} congé(s) / {{ p.nb_autorisations_attente }} autorisation(s) à traiter
+              </span>
+            {% endif %}
+            {% if user.role == 'PAYROLL' %}
+            <a href="{% url 'payroll:payslip_validate' p.pk %}" class="td-btn td-btn-outline td-btn-sm" style="margin-left:6px;">Valider</a>
+            {% endif %}
+          {% endif %}
+          {% if user.role == 'PAYROLL' or p.status == 'VALIDATED' %}
+          <a href="{% url 'payroll:payslip_export' employee.pk %}?month={{ p.month }}&year={{ p.year }}" class="td-btn td-btn-outline td-btn-sm" style="margin-left:6px;">⬇️ Télécharger</a>
+          {% else %}
+          <span class="td-badge td-badge-muted" style="margin-left:6px;" title="Le téléchargement ne sera possible qu'une fois ce bulletin validé par la Paie.">🔒 Pas encore disponible</span>
+          {% endif %}        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="td-empty">Aucun bulletin généré pour le moment.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="td-card">
+  <div class="td-card-title">📈 Historique des augmentations</div>
+  <table class="td-table">
+    <thead><tr><th>Date d'effet</th><th>Ancien</th><th>Nouveau</th><th>Taux</th><th>Type</th><th>Motif</th><th>Décidé par</th></tr></thead>
+    <tbody>
+      {% for h in history %}
+      <tr>
+        <td>{{ h.effective_date }}</td>
+        <td>{{ h.previous_amount }}</td>
+        <td>{{ h.new_amount }}</td>
+        <td>{{ h.percentage }}%</td>
+        <td>{{ h.get_increase_type_display }}</td>
+        <td>{{ h.reason|default:"—" }}</td>
+        <td>{{ h.decided_by }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="td-empty">Aucune augmentation enregistrée.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if user.role == 'PAYROLL' or user.role == 'ADMIN' %}
+  <a href="{% url 'payroll:add_raise' employee.pk %}" class="td-btn td-btn-primary td-btn-sm" style="margin-top:14px;">+ Ajouter directement une augmentation</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

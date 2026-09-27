@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block page_title %}{% if editing %}Modifier mon autorisation{% else %}Nouvelle autorisation{% endif %}{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:600px;">
+  <div class="td-card-title">Demande d'autorisation d'absence</div>
+  <p style="color:var(--td-text-muted); font-size:.85rem;">Sortie médicale, administrative, retard justifié, départ anticipé... Absence courte et ponctuelle, validée par votre manager ou la RH.</p>
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="td-label">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<div class="td-alert td-alert-error">{{ field.errors|striptags }}</div>{% endif %}
+    {% endfor %}
+    {% if form.non_field_errors %}<div class="td-alert td-alert-error">{{ form.non_field_errors|striptags }}</div>{% endif %}
+    <button class="td-btn td-btn-primary">{% if editing %}Enregistrer les modifications{% else %}Envoyer la demande à mon manager{% endif %}</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block page_title %}Demandes à valider{% endblock %}
+{% block content %}
+
+{% if step1_leaves or step1_auths %}
+<div class="td-card">
+  <div class="td-card-title">
+    Étape 1 — {% if user.role == 'MANAGER' %}à valider par vous (Manager){% else %}à valider par la Direction{% endif %}
+  </div>
+  <table class="td-table">
+    <thead><tr><th>Employé</th><th>Type</th><th>Détail</th><th>Motif</th><th></th></tr></thead>
+    <tbody>
+      {% for l in step1_leaves %}
+      <tr>
+        <td>{{ l.employee }} <span class="td-badge td-badge-info">{{ l.employee.user.get_role_display }}</span></td>
+        <td>Congé — {{ l.leave_type }}</td>
+        <td>{{ l.start_date }} → {{ l.end_date }} ({{ l.nb_days }} j)</td>
+        <td style="color:var(--td-text-muted);">{{ l.reason|default:"—"|truncatechars:40 }}</td>
+        <td style="display:flex; gap:8px;">
+          <a href="{% url 'leaves:decide_step1' l.pk 'approve' %}" class="td-btn td-btn-success td-btn-sm">✓ Accepter</a>
+          <a href="{% url 'leaves:decide_step1' l.pk 'reject' %}" class="td-btn td-btn-danger td-btn-sm">✕ Refuser</a>
+        </td>
+      </tr>
+      {% endfor %}
+      {% for a in step1_auths %}
+      <tr>
+        <td>{{ a.employee }} <span class="td-badge td-badge-info">{{ a.employee.user.get_role_display }}</span></td>
+        <td>Autorisation</td>
+        <td>{{ a.get_kind_display }} — {{ a.date }} ({{ a.start_time }} → {{ a.end_time }}, {{ a.duration_hours }} h)</td>
+        <td style="color:var(--td-text-muted);">{{ a.reason|truncatechars:40 }}</td>
+        <td style="display:flex; gap:8px;">
+          <a href="{% url 'leaves:authorization_decide_step1' a.pk 'approve' %}" class="td-btn td-btn-success td-btn-sm">✓ Accepter</a>
+          <a href="{% url 'leaves:authorization_decide_step1' a.pk 'reject' %}" class="td-btn td-btn-danger td-btn-sm">✕ Refuser</a>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not step1_leaves and not step1_auths %}
+      <tr><td colspan="5" class="td-empty">Rien en attente 🎉</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if user.role == 'RH' or user.role == 'ADMIN' %}
+<div class="td-card">
+  <div class="td-card-title">Étape 2 — Validation RH (déjà approuvées en étape 1)</div>
+  <table class="td-table">
+    <thead><tr><th>Employé</th><th>Type</th><th>Détail</th><th>Approuvé en étape 1 par</th><th></th></tr></thead>
+    <tbody>
+      {% for l in step2_leaves %}
+      <tr>
+        <td>{{ l.employee }}</td>
+        <td>Congé — {{ l.leave_type }}</td>
+        <td>{{ l.start_date }} → {{ l.end_date }} ({{ l.nb_days }} j)</td>
+        <td style="color:var(--td-text-muted);">{{ l.step1_decided_by }}</td>
+        <td style="display:flex; gap:8px;">
+          <a href="{% url 'leaves:decide_step2' l.pk 'approve' %}" class="td-btn td-btn-success td-btn-sm">✓ Valider</a>
+          <a href="{% url 'leaves:decide_step2' l.pk 'reject' %}" class="td-btn td-btn-danger td-btn-sm">✕ Refuser</a>
+        </td>
+      </tr>
+      {% endfor %}
+      {% for a in step2_auths %}
+      <tr>
+        <td>{{ a.employee }}</td>
+        <td>Autorisation</td>
+        <td>{{ a.get_kind_display }} — {{ a.date }} ({{ a.start_time }} → {{ a.end_time }})</td>
+        <td style="color:var(--td-text-muted);">{{ a.step1_decided_by }}</td>
+        <td style="display:flex; gap:8px;">
+          <a href="{% url 'leaves:authorization_decide_step2' a.pk 'approve' %}" class="td-btn td-btn-success td-btn-sm">✓ Valider</a>
+          <a href="{% url 'leaves:authorization_decide_step2' a.pk 'reject' %}" class="td-btn td-btn-danger td-btn-sm">✕ Refuser</a>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not step2_leaves and not step2_auths %}
+      <tr><td colspan="5" class="td-empty">Rien en attente de validation RH 🎉</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if not step1_leaves and not step1_auths and not step2_leaves and not step2_auths %}
+<div class="td-empty">Aucune demande en attente vous concernant 🎉</div>
+{% endif %}
+
+{% endblock %}

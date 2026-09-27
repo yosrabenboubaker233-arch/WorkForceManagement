@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block page_title %}Politique de paie{% endblock %}
+{% block content %}
+
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <span>Politique de paie en vigueur</span>
+    {% if user.role == 'PAYROLL' %}
+    <a href="{% url 'payroll:policy_edit' %}" class="td-btn td-btn-primary td-btn-sm">Modifier</a>
+    {% endif %}
+  </div>
+  <p style="color:var(--td-text-muted); font-size:.85rem; margin-top:-8px;">
+    Ces réglages sont distincts du barème CNSS/CSS/IRPP : ils déterminent comment les heures
+    supplémentaires et le taux horaire sont calculés à partir du pointage et du contrat.
+  </p>
+
+  <div class="td-grid">
+    <div class="td-stat"><div class="td-stat-value">{{ policy.get_hourly_rate_method_display }}</div><div class="td-stat-label">Méthode de taux horaire</div></div>
+    <div class="td-stat"><div class="td-stat-value">{{ policy.overtime_rate_1 }}%</div><div class="td-stat-label">Majoration heures sup. taux 1</div></div>
+    <div class="td-stat"><div class="td-stat-value">{{ policy.overtime_rate_2 }}%</div><div class="td-stat-label">Majoration heures sup. taux 2 (&gt; {{ policy.overtime_tier2_threshold_hours }}h/sem.)</div></div>
+    <div class="td-stat"><div class="td-stat-value">{{ policy.holiday_rate }}%</div><div class="td-stat-label">Majoration jour férié travaillé</div></div>
+    <div class="td-stat"><div class="td-stat-value">{{ policy.get_rest_day_policy_display }}</div><div class="td-stat-label">Politique jour de repos</div></div>
+    <div class="td-stat"><div class="td-stat-value">{{ policy.internal_weekly_overtime_limit_percent }}%</div><div class="td-stat-label">Limite interne heures sup./semaine</div></div>
+  </div>
+
+  {% if policy.hourly_rate_method == 'FORFAIT_MENSUEL_FIXE' %}
+  <p style="color:var(--td-text-muted); font-size:.85rem; margin-top:12px;">
+    Heures mensuelles fixes utilisées pour le taux horaire : <strong>{{ policy.fixed_monthly_hours }} h</strong>.
+  </p>
+  {% endif %}
+
+  {% if policy.rest_day_policy == 'SPECIAL_RATE' %}
+  <p style="color:var(--td-text-muted); font-size:.85rem; margin-top:4px;">
+    Majoration appliquée dès la 1ère heure travaillée un jour de repos : <strong>{{ policy.rest_day_rate }}%</strong>.
+  </p>
+  {% endif %}
+
+  <div class="td-alert td-alert-info" style="margin-top:14px;">
+    La limite interne d'heures supplémentaires est une règle propre à l'entreprise — elle ne remplace
+    aucune limite légale éventuelle. Son dépassement déclenche une alerte et une demande de validation RH.
+  </div>
+</div>
+
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <span>Jours fériés</span>
+    {% if user.role == 'PAYROLL' %}
+    <a href="{% url 'payroll:holiday_create' %}" class="td-btn td-btn-primary td-btn-sm">+ Ajouter</a>
+    {% endif %}
+  </div>
+  <table class="td-table">
+    <thead><tr><th>Date</th><th>Libellé</th></tr></thead>
+    <tbody>
+      {% for h in holidays %}
+      <tr><td>{{ h.date }}</td><td>{{ h.label }}</td></tr>
+      {% empty %}
+      <tr><td colspan="2" class="td-empty">Aucun jour férié enregistré.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

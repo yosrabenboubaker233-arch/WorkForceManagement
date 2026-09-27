@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block page_title %}Présence de l'équipe{% endblock %}
+{% block content %}
+
+<div class="td-card">
+  <form method="get" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div>
+      <label class="td-label">Date</label>
+      <input class="td-input" style="margin-bottom:0;" type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+    </div>
+    <button class="td-btn td-btn-primary">Afficher</button>
+  </form>
+</div>
+
+<div class="td-grid">
+  <div class="td-stat"><div class="td-stat-value">{{ nb_present }}</div><div class="td-stat-label">Présents</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ nb_absent }}</div><div class="td-stat-label">Absents</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ nb_conge }}</div><div class="td-stat-label">En congé</div></div>
+  <div class="td-stat"><div class="td-stat-value">{{ nb_autorisation }}</div><div class="td-stat-label">En autorisation</div></div>
+</div>
+
+<div class="td-card">
+  <div class="td-card-title" style="margin-top:0;">Résultats pour le {{ selected_date|date:"d/m/Y" }}</div>
+  <table class="td-table">
+    <thead><tr><th>Employé</th><th>Arrivée</th><th>Départ</th><th>Statut</th><th>Détail</th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td style="display:flex; align-items:center; gap:10px;">
+          {% if row.employee.user.avatar %}
+            <img src="{{ row.employee.user.avatar.url }}" alt="" style="width:28px; height:28px; border-radius:50%; object-fit:cover;">
+          {% else %}
+            <div class="td-avatar">{{ row.employee.full_name|first|upper }}</div>
+          {% endif %}
+          {{ row.employee }}
+        </td>
+        <td>{{ row.attendance.check_in|default:"—" }}</td>
+        <td>{{ row.attendance.check_out|default:"—" }}</td>
+        <td>
+          {% if row.situation == 'present' %}<span class="td-badge td-badge-approved">Présent</span>
+          {% elif row.situation == 'leave' %}<span class="td-badge td-badge-info">En congé</span>
+          {% elif row.situation == 'authorization' %}<span class="td-badge td-badge-info">Autorisation</span>
+          {% else %}<span class="td-badge td-badge-rejected">Absent</span>{% endif %}
+        </td>
+        <td style="color:var(--td-text-muted); font-size:.85rem;">
+          {% if row.leave %}{{ row.leave.leave_type }} ({{ row.leave.start_date }} → {{ row.leave.end_date }})
+          {% elif row.authorization %}{{ row.authorization.get_kind_display }} ({{ row.authorization.start_time }}-{{ row.authorization.end_time }})
+          {% elif row.attendance.lieu == 'teletravail' %}
+            🏠 Télétravail
+            {% if row.employee.manager_id == user.employee_profile.pk %}
+              {% if row.attendance.rapport_teletravail %}
+                · <a href="{{ row.attendance.rapport_teletravail.url }}" target="_blank">📎 Rapport du jour</a>
+                · <form method="post" action="{% url 'attendance:supprimer_rapport' row.attendance.pk %}" style="display:inline;" onsubmit="return confirm('Supprimer ce rapport ?');">
+                    {% csrf_token %}
+                    <button type="submit" style="background:none; border:none; padding:0; color:var(--td-danger); cursor:pointer; font-size:inherit;">Supprimer</button>
+                  </form>
+              {% elif row.attendance.check_out %}
+                · <span class="td-badge td-badge-pending">⚠️ Aucun rapport déposé</span>
+              {% endif %}
+            {% elif row.attendance.rapport_teletravail %}
+              · <span class="td-badge td-badge-muted" title="Visible uniquement par le manager direct.">🔒 Rapport déposé</span>
+            {% endif %}
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="td-empty">Aucun employé.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

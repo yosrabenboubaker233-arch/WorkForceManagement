@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block page_title %}Employés{% endblock %}
+{% block content %}
+
+<div class="td-card">
+  <form method="get" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div style="flex:1; min-width:220px;">
+      <label class="td-label">Recherche</label>
+      <input class="td-input" style="margin-bottom:0;" type="text" name="q" value="{{ query }}" placeholder="Nom, poste...">
+    </div>
+    <div style="min-width:200px;">
+      <label class="td-label">Service</label>
+      <select class="td-input" style="margin-bottom:0;" name="department">
+        <option value="">Tous les services</option>
+        {% for d in departments %}
+        <option value="{{ d.id }}" {% if department_id == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="td-btn td-btn-primary">Filtrer</button>
+    {% if user.role == 'RH' or user.role == 'ADMIN' %}
+    <a href="{% url 'employees:create' %}" class="td-btn td-btn-outline">+ Nouvel employé</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="td-card">
+  <div style="overflow-x:auto;">
+  <table class="td-table">
+    <thead><tr><th>Employé</th><th>Email</th><th>Poste</th><th>Service</th><th>Manager</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for e in employees %}
+      <tr>
+        <td style="display:flex; align-items:center; gap:10px;">
+          {% if e.user.avatar %}
+            <img src="{{ e.user.avatar.url }}" alt="" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">
+          {% else %}
+            <div class="td-avatar">{{ e.full_name|first|upper }}</div>
+          {% endif %}
+          {{ e.full_name }}
+        </td>
+        <td style="color:var(--td-text-muted); font-size:.85rem;">
+          <a href="mailto:{{ e.user.email }}">{{ e.user.email|default:"—" }}</a>
+        </td>
+        <td>{{ e.job_title|default:"—" }}</td>
+        <td>{{ e.department|default:"—" }}</td>
+        <td>{{ e.manager|default:"—" }}</td>
+        <td>
+          {% if e.status == 'ACTIVE' %}<span class="td-badge td-badge-approved">Actif</span>
+          {% else %}<span class="td-badge td-badge-muted">Inactif</span>{% endif %}
+        </td>
+        <td style="white-space:nowrap; text-align:right;"><a href="{% url 'employees:detail' e.pk %}">Voir le dossier →</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="td-empty">Aucun employé trouvé.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block page_title %}{% if editing %}Modifier un document{% else %}Ajouter un document{% endif %}{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:560px;">
+  <div class="td-card-title">Document pour {{ employee }}</div>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="td-label">{{ field.label }}</label>
+      {{ field }}
+    {% endfor %}
+    <button class="td-btn td-btn-primary">{% if editing %}Enregistrer{% else %}Ajouter{% endif %}</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block page_title %}Traiter l'autorisation{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:560px;">
+  <div class="td-card-title">
+    {{ auth.employee }} — {{ auth.get_kind_display }} — {{ auth.date }} ({{ auth.start_time }} → {{ auth.end_time }}, {{ auth.duration_hours }} h)
+  </div>
+  <p style="color:var(--td-text-muted);">Motif : {{ auth.reason }}</p>
+  <p style="font-size:.82rem;">
+    {% if step == 1 %}
+      Étape 1 sur {% if auth.step2_required %}2{% else %}1{% endif %} — approbateur : {{ auth.step1_label }}
+    {% else %}
+      Étape 2 sur 2 — validation RH. Déjà approuvée en étape 1 par {{ auth.step1_decided_by }}
+      {% if auth.step1_comment %}(commentaire : {{ auth.step1_comment }}){% endif %}.
+    {% endif %}
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <label class="td-label">Commentaire {% if decision == 'reject' %}(obligatoire){% endif %}</label>
+    {{ form.comment }}
+    {% if decision == 'approve' %}
+      <button class="td-btn td-btn-success">✓ Confirmer l'acceptation</button>
+    {% else %}
+      <button class="td-btn td-btn-danger">✕ Confirmer le refus</button>
+    {% endif %}
+    <a href="{% url 'leaves:validation_inbox' %}" class="td-btn td-btn-outline">Annuler</a>
+  </form>
+</div>
+{% endblock %}

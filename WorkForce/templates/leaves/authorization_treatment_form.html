@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block page_title %}Traitement paie de l'autorisation{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:480px;">
+  <div class="td-card-title" style="margin-top:0;">{{ auth.employee }} — {{ auth.date }}</div>
+  <p style="color:var(--td-text-muted); font-size:.85rem;">{{ auth.get_kind_display }} ({{ auth.start_time }} → {{ auth.end_time }}, {{ auth.duration_hours }} h)</p>
+  <form method="post">
+    {% csrf_token %}
+    <label class="td-label">{{ form.treatment.label }}</label>
+    {{ form.treatment }}
+    <button class="td-btn td-btn-primary" style="margin-top:14px;">Enregistrer</button>
+    <a href="{% url 'leaves:authorization_history' %}" class="td-btn td-btn-outline">Annuler</a>
+  </form>
+</div>
+{% endblock %}

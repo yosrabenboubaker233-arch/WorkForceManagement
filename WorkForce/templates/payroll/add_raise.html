@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block page_title %}Nouvelle augmentation{% endblock %}
+{% block content %}
+<div class="td-card" style="max-width:560px;">
+  <div class="td-card-title">{{ employee }} — salaire actuel : {{ salary.base_amount }} {{ salary.currency }}</div>
+  <p style="color:var(--td-text-muted); font-size:.85rem; margin-top:-8px;">
+    « Pourcentage » : la valeur saisie est le taux d'augmentation (ex : 10 pour +10%).<br>
+    « Montant fixe » : la valeur saisie est directement le nouveau salaire de base.
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="td-label">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<div class="td-alert td-alert-error">{{ field.errors|striptags }}</div>{% endif %}
+    {% endfor %}
+    <button class="td-btn td-btn-primary">Enregistrer l'augmentation</button>
+  </form>
+</div>
+{% endblock %}

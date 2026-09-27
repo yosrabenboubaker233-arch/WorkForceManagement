@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block page_title %}{{ task.title }}{% endblock %}
+{% block content %}
+
+<div class="td-card">
+  <div class="td-card-title">{{ task.title }}</div>
+  <p style="color:var(--td-text-muted);">{{ task.description|default:"Aucune description." }}</p>
+  <p style="font-size:.85rem;">
+    <strong>Assignée à :</strong> {{ task.employee }} ·
+    <strong>Par :</strong> {{ task.assigned_by|default:"—" }} ·
+    <strong>Échéance :</strong> {{ task.due_date|default:"—" }}
+  </p>
+  {% if user.role == 'ADMIN' or task.assigned_by.user == user %}
+  <div style="display:flex; gap:10px; margin-top:10px;">
+    <a href="{% url 'tasks:edit' task.pk %}" class="td-btn td-btn-outline td-btn-sm">✏️ Modifier</a>
+    <a href="{% url 'tasks:delete' task.pk %}" class="td-btn td-btn-danger td-btn-sm">🗑️ Supprimer</a>
+  </div>
+  {% endif %}
+
+  {% if is_owner %}
+  <form method="post" style="display:flex; gap:10px; align-items:flex-end; margin-top:14px;">
+    {% csrf_token %}
+    <div style="flex:1;">
+      <label class="td-label">Statut</label>
+      {{ status_form.status }}
+    </div>
+    <button type="submit" name="update_status" class="td-btn td-btn-primary">Mettre à jour</button>
+  </form>
+  {% else %}
+  <p>
+    Statut actuel :
+    {% if task.status == 'TODO' %}<span class="td-badge td-badge-pending">À faire</span>
+    {% elif task.status == 'IN_PROGRESS' %}<span class="td-badge td-badge-info">En cours</span>
+    {% else %}<span class="td-badge td-badge-approved">Terminée</span>{% endif %}
+  </p>
+  {% endif %}
+</div>
+
+<div class="td-card">
+  <div class="td-card-title">💬 Discussion</div>
+  <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+    {% for c in comments %}
+    <div style="background:var(--td-bg-alt); border-radius:var(--td-radius-sm); padding:10px 14px;">
+      <div style="display:flex; justify-content:space-between; font-size:.8rem; color:var(--td-text-muted);">
+        <strong style="color:var(--td-text);">{{ c.author.get_full_name|default:c.author.username }}</strong>
+        <span>{{ c.created_at|timesince }}</span>
+      </div>
+      {% if c.message %}<div style="margin-top:4px;">{{ c.message }}</div>{% endif %}
+      {% if c.report %}
+      <div style="margin-top:6px;">
+        <a href="{{ c.report.url }}" target="_blank" class="td-badge td-badge-info" style="text-decoration:none;">
+          📎 Rapport : {{ c.report_name }}
+        </a>
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="td-empty">Aucun message pour le moment.</div>
+    {% endfor %}
+  </div>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ comment_form.message }}
+    <div style="margin-top:8px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <label class="td-label" style="margin:0;">📎 Joindre un rapport (fichier)</label>
+      {{ comment_form.report }}
+    </div>
+    {% if comment_form.non_field_errors %}
+      <div class="td-alert td-alert-error">{{ comment_form.non_field_errors|striptags }}</div>
+    {% endif %}
+    <button type="submit" name="add_comment" class="td-btn td-btn-primary td-btn-sm" style="margin-top:10px;">Envoyer</button>
+  </form>
+</div>
+
+{% endblock %}
