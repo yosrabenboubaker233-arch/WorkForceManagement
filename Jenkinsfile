@@ -2,12 +2,6 @@ pipeline {
     agent any
     
     stages {
-        stage('1. Checkout Code') {
-            steps {
-                git branch: 'main', url: 'https://github.com/VOTRE_PSEUDO/VOTRE_REPO.git'
-            }
-        }
-        
         stage('2. Build Django Docker Image') {
             steps {
                 script {
@@ -18,7 +12,7 @@ pipeline {
         
         stage('3. Security Scan (Trivy)') {
             steps {
-                // Scan de l'image Docker fraîchement construite
+                // Scan de l'image Docker fraîchement construite contre les vulnérabilités
                 sh 'trivy image --severity HIGH,CRITICAL workforce-django-app:latest'
             }
         }
