@@ -36,6 +36,18 @@ pipeline {
                 }
             }
         }
+
+        stage('4. Deploy') {
+            steps {
+                sh '''
+                    docker rm -f workforce-app || true
+                    docker run -d --name workforce-app --restart unless-stopped \
+                      -p 8000:8000 \
+                      -v workforce_data:/app/data \
+                      ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                '''
+            }
+        }
     }
 
     post {
@@ -44,7 +56,7 @@ pipeline {
             sh 'docker image prune -f || true'
         }
         success {
-            echo "Image publiée : ${DOCKER_IMAGE}:${BUILD_NUMBER}"
+            echo "Déployé : ${DOCKER_IMAGE}:${BUILD_NUMBER} sur http://13.62.10.222:8000"
         }
         failure {
             echo 'Le build a échoué, consultez les logs ci-dessus.'
