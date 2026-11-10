@@ -1,8 +1,14 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+        disableConcurrentBuilds()
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
     environment {
-        DOCKER_IMAGE = 'yosra158/workforce-django-app'
+        DOCKER_IMAGE   = 'yosra158/workforce-django-app'
         CREDENTIALS_ID = '6679e6e3-015a-4495-83ce-9326fa796750'
     }
 
@@ -15,15 +21,33 @@ pipeline {
 
         stage('2. Build Django Docker Image') {
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: "${CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-                    }
+                sh "docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} -t ${DOCKER_IMAGE}:latest ."
+            }
+        }
 
-                    sh "docker build -t ${DOCKER_IMAGE}:latest ."
+        stage('3. Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${CREDENTIALS_ID}",
+                                                  usernameVariable: 'DOCKER_USER',
+                                                  passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                    sh "docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}"
                     sh "docker push ${DOCKER_IMAGE}:latest"
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout || true'
+            sh 'docker image prune -f || true'
+        }
+        success {
+            echo "Image publiée : ${DOCKER_IMAGE}:${BUILD_NUMBER}"
+        }
+        failure {
+            echo 'Le build a échoué, consultez les logs ci-dessus.'
         }
     }
 }
