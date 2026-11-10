@@ -14,10 +14,18 @@ spec:
     spec:
       containers:
       - name: workforce-django
-        image: workforce-django-app:latest
-        imagePullPolicy: IfNotPresent
+        image: yosra158/workforce-django-app:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+      volumes:
+      - name: data
+        hostPath:
+          path: /data/workforce
+          type: DirectoryOrCreate
 ---
 apiVersion: v1
 kind: Service
