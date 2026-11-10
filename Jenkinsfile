@@ -9,7 +9,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE   = 'yosra158/workforce-django-app'
-        CREDENTIALS_ID = '6679e6e3-015a-4495-83ce-9326fa796750'
+        CREDENTIALS_ID = '3b6e329f-f8e0-4ffb-a45c-cc949cf8e6b0'
     }
 
     stages {
