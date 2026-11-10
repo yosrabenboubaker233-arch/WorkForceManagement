@@ -25,7 +25,20 @@ pipeline {
             }
         }
 
-        stage('3. Push to Docker Hub') {
+        stage('3. Trivy Scan') {
+            steps {
+                sh '''
+                    docker run --rm \
+                      -v /var/run/docker.sock:/var/run/docker.sock \
+                      -v trivy_cache:/root/.cache/ \
+                      aquasec/trivy:latest image \
+                      --severity HIGH,CRITICAL --exit-code 0 --no-progress \
+                      ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                '''
+            }
+        }
+
+        stage('4. Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${CREDENTIALS_ID}",
                                                   usernameVariable: 'DOCKER_USER',
@@ -37,7 +50,7 @@ pipeline {
             }
         }
 
-        stage('4. Deploy') {
+        stage('5. Deploy') {
             steps {
                 sh '''
                     docker rm -f workforce-app || true
