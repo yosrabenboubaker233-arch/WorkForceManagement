@@ -4,7 +4,12 @@ pipeline {
     options {
         skipDefaultCheckout(true)
         disableConcurrentBuilds()
-        timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 45, unit: 'MINUTES')
+    }
+
+    parameters {
+        choice(name: 'DEPLOY_TARGET', choices: ['docker', 'kubernetes'],
+               description: 'Cible de déploiement')
     }
 
     environment {
@@ -24,9 +29,12 @@ pipeline {
                 script {
                     def scannerHome = tool 'SonarQubeScanner'
                     withSonarQubeEnv('MonSonarQube') {
-                        sh "${scannerHome}/bin/sonar-scanner \
-                        -Dsonar.projectKey=workforce-django \
-                        -Dsonar.sources=WorkForce"
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                              -Dsonar.projectKey=workforce-django \
+                              -Dsonar.sources=WorkForce \
+                              -Dsonar.exclusions=**/migrations/**,**/static/**
+                        """
                     }
                 }
             }
@@ -54,8 +62,8 @@ pipeline {
         stage('5. Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${CREDENTIALS_ID}",
-                                                usernameVariable: 'DOCKER_USER',
-                                                passwordVariable: 'DOCKER_PASS')]) {
+                                                  usernameVariable: 'DOCKER_USER',
+                                                  passwordVariable: 'DOCKER_PASS')]) {
                     sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
                     sh "docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}"
                     sh "docker push ${DOCKER_IMAGE}:latest"
@@ -63,16 +71,8 @@ pipeline {
             }
         }
 
-        stage('6. Infrastructure with Terraform') {
-            steps {
-                dir('terraform') {
-                    sh 'terraform init -no-color'
-                    sh 'terraform apply -auto-approve'
-                }
-            }
-        }
-
-        stage('7. Deploy Application') {
+        stage('6. Deploy Docker') {
+            when { expression { (params.DEPLOY_TARGET ?: 'docker') == 'docker' } }
             steps {
                 sh '''
                     docker rm -f workforce-app || true
@@ -83,6 +83,26 @@ pipeline {
                 '''
             }
         }
+
+        stage('7. Deploy Kubernetes') {
+            when { expression { params.DEPLOY_TARGET == 'kubernetes' } }
+            steps {
+                sh '''
+                    kubectl apply -f kubernetes/
+                    kubectl set image deployment/workforce-django-deployment \
+                      workforce-django=${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    kubectl rollout status deployment/workforce-django-deployment --timeout=180s
+                '''
+            }
+        }
+
+        stage('8. Monitoring Stack') {
+            steps {
+                dir('monitoring') {
+                    sh 'docker compose up -d'
+                }
+            }
+        }
     }
 
     post {
@@ -91,19 +111,10 @@ pipeline {
             sh 'docker image prune -f || true'
         }
         success {
-            echo "Déployé : ${DOCKER_IMAGE}:${BUILD_NUMBER} sur http://13.62.10.222:8000"
+            echo "Déployé : ${DOCKER_IMAGE}:${BUILD_NUMBER}"
         }
         failure {
             echo 'Le build a échoué, consultez les logs ci-dessus.'
         }
     }
-            stage('8. Restart Monitoring Stack') {
-        steps {
-            dir('monitoring') {
-                sh 'docker compose down'
-                sh 'docker compose up -d'
-            }
-        }
-    }
-            
 }
