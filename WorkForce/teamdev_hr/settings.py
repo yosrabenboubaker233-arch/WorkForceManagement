@@ -77,7 +77,8 @@ LEAVE_PREAVIS_JOURS = 2          # préavis minimum avant la date de début d'un
 # plusieurs constantes non synchronisées dispersées dans le code.
 ANNUAL_LEAVE_DAYS = 26
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["13.62.10.222", "localhost", "127.0.0.1"]
+CSRF_TRUSTED_ORIGINS = ["http://13.62.10.222:8000"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
