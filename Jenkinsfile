@@ -95,6 +95,7 @@ pipeline {
               || { kubectl rollout undo deployment/workforce-django-deployment; exit 1; }
         '''
     }
+     }
 
         stage('8. Monitoring Stack') {
             steps {
