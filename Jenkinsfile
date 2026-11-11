@@ -8,7 +8,7 @@ pipeline {
     }
 
     parameters {
-        choice(name: 'DEPLOY_TARGET', choices: ['docker', 'kubernetes'],
+        choice(name: 'DEPLOY_TARGET', choices: ['docker', 'kubernetes', 'both'],
                description: 'Cible de déploiement')
     }
 
@@ -72,7 +72,7 @@ pipeline {
         }
 
         stage('6. Deploy Docker') {
-            when { expression { (params.DEPLOY_TARGET ?: 'docker') == 'docker' } }
+            when { expression { (params.DEPLOY_TARGET ?: 'docker') in ['docker', 'both'] } }
             steps {
                 sh '''
                     docker rm -f workforce-app || true
