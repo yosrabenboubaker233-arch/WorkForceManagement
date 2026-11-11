@@ -85,15 +85,16 @@ pipeline {
         }
 
         stage('7. Deploy Kubernetes') {
-            steps {
-                sh '''
-                    kubectl apply -f kubernetes/
-                    kubectl set image deployment/workforce-django-deployment \
-                      workforce-django=${DOCKER_IMAGE}:${BUILD_NUMBER}
-                    kubectl rollout status deployment/workforce-django-deployment --timeout=180s
-                '''
-            }
-        }
+    when { expression { params.DEPLOY_TARGET == 'kubernetes' } }
+    steps {
+        sh '''
+            kubectl apply -f kubernetes/
+            kubectl set image deployment/workforce-django-deployment \
+              workforce-django=${DOCKER_IMAGE}:${BUILD_NUMBER}
+            kubectl rollout status deployment/workforce-django-deployment --timeout=180s \
+              || { kubectl rollout undo deployment/workforce-django-deployment; exit 1; }
+        '''
+    }
 
         stage('8. Monitoring Stack') {
             steps {
