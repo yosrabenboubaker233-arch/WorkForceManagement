@@ -117,5 +117,5 @@ pipeline {
             echo 'Le build a échoué, consultez les logs ci-dessus.'
         }
     }
-}
+    }
 }
