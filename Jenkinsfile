@@ -85,7 +85,7 @@ pipeline {
         }
 
         stage('7. Deploy Kubernetes') {
-            when { expression { params.DEPLOY_TARGET == 'kubernetes' } }
+            when { expression { params.DEPLOY_TARGET in ['kubernetes', 'both'] } }
             steps {
                 sh '''
                     kubectl apply -f kubernetes/
