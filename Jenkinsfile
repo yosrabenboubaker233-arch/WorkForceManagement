@@ -39,6 +39,13 @@ pipeline {
                 }
             }
         }
+        stage('2b. Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
 
         stage('3. Build Django Docker Image') {
             steps {
