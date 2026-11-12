@@ -120,7 +120,45 @@ pipeline {
             }
         }
 
-        stage('8. Monitoring Stack') {
+        stage('8. DAST - OWASP ZAP') {
+            steps {
+                // Attendre que l'application réponde
+                sh '''
+                    for i in $(seq 1 12); do
+                        curl -sk -o /dev/null -w "%{http_code}" https://yosrabenboubaker.me | grep -qE "200|302" && break
+                        echo "Application pas encore prête, attente..."
+                        sleep 5
+                    done
+                    mkdir -p zap-reports && chmod 777 zap-reports
+                '''
+                script {
+                    def rc = sh(returnStatus: true, script: '''
+                        docker run --rm \
+                          -v "$WORKSPACE/zap-reports:/zap/wrk:rw" \
+                          ghcr.io/zaproxy/zaproxy:stable \
+                          zap-baseline.py \
+                            -t https://yosrabenboubaker.me \
+                            -m 2 \
+                            -r zap-report.html \
+                            -J zap-report.json
+                    ''')
+                    if (rc == 1) {
+                        error "OWASP ZAP : vulnérabilités de niveau FAIL détectées"
+                    } else if (rc == 2) {
+                        unstable "OWASP ZAP : avertissements détectés (voir zap-report.html)"
+                    } else if (rc > 2) {
+                        unstable "OWASP ZAP : erreur d'exécution du scan (code ${rc})"
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'zap-reports/*', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('9. Monitoring Stack') {
             steps {
                 dir('monitoring') {
                     sh 'docker compose up -d'
