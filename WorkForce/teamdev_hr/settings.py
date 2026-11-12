@@ -141,6 +141,18 @@ DATABASES = {
         "NAME": BASE_DIR / "data"  / "db.sqlite3",
     }
 }
+if os.environ.get("DB_HOST"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME"),
+            "USER": os.environ.get("DB_USER"),
+            "PASSWORD": os.environ.get("DB_PASSWORD"),
+            "HOST": os.environ.get("DB_HOST"),
+            "PORT": os.environ.get("DB_PORT", "5432"),
+            "OPTIONS": {"sslmode": "require"},
+        }
+    }
 
 AUTH_USER_MODEL = "accounts.User"
 
