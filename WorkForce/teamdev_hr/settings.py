@@ -78,8 +78,16 @@ LEAVE_PREAVIS_JOURS = 2          # préavis minimum avant la date de début d'un
 # plusieurs constantes non synchronisées dispersées dans le code.
 ANNUAL_LEAVE_DAYS = 26
 
-ALLOWED_HOSTS = ["yosrabenboubaker.me", "www.yosrabenboubaker.me", "13.62.10.222", "10.0.1.47", "localhost", "127.0.0.1"]
-CSRF_TRUSTED_ORIGINS = ["https://yosrabenboubaker.me", "https://www.yosrabenboubaker.me"]
+ALLOWED_HOSTS = os.environ.get(
+    "DJANGO_ALLOWED_HOSTS",
+    "yosrabenboubaker.me,www.yosrabenboubaker.me,localhost,127.0.0.1",
+).split(",")
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://yosrabenboubaker.me",
+    "https://www.yosrabenboubaker.me",
+]
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 INSTALLED_APPS = [
