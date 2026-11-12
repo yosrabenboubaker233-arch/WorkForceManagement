@@ -15,6 +15,8 @@ pipeline {
     environment {
         DOCKER_IMAGE   = 'yosra158/workforce-django-app'
         CREDENTIALS_ID = '3b6e329f-f8e0-4ffb-a45c-cc949cf8e6b0'
+        DJANGO_ALLOWED_HOSTS = 'yosrabenboubaker.me,www.yosrabenboubaker.me,13.62.10.222,10.0.1.47,localhost,127.0.0.1'
+
     }
 
     stages {
@@ -96,6 +98,7 @@ pipeline {
                           -e DB_NAME=workforce_db \
                           -e DB_USER=workforce_admin \
                           -e DB_PASSWORD="$DB_PASSWORD" \
+                          -e DJANGO_ALLOWED_HOSTS="$DJANGO_ALLOWED_HOSTS" \
                           ${DOCKER_IMAGE}:${BUILD_NUMBER}
                     '''
                 }
@@ -107,6 +110,8 @@ pipeline {
             steps {
                 sh '''
                     kubectl apply -f kubernetes/
+                    kubectl set env deployment/workforce-django-deployment \
+                      DJANGO_ALLOWED_HOSTS="$DJANGO_ALLOWED_HOSTS"
                     kubectl set image deployment/workforce-django-deployment \
                       workforce-django=${DOCKER_IMAGE}:${BUILD_NUMBER}
                     kubectl rollout status deployment/workforce-django-deployment --timeout=180s \
