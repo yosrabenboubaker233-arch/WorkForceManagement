@@ -89,6 +89,12 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# --- En-têtes et cookies de sécurité (DAST / OWASP ZAP) ---
+SECURE_HSTS_SECONDS = 3600          # commencer par 1 h, puis 31536000 (1 an) une fois validé
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SESSION_COOKIE_SECURE = os.environ.get("DJANGO_SECURE_COOKIES", "True") == "True"
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+X_FRAME_OPTIONS = "DENY"
 
 INSTALLED_APPS = [
     "django.contrib.admin",
