@@ -74,14 +74,20 @@ pipeline {
         stage('6. Deploy Docker') {
             when { expression { (params.DEPLOY_TARGET ?: 'docker') in ['docker', 'both'] } }
             steps {
-                sh '''
-                    docker rm -f workforce-app || true
-                    docker run -d --name workforce-app --restart unless-stopped \
-                      -p 8000:8000 \
-                      -v workforce_data:/app/data \
-                      -e AWS_STORAGE_BUCKET_NAME=workforce-management-storage-unique-xyz \
-                      ${DOCKER_IMAGE}:${BUILD_NUMBER}
-                '''
+                withCredentials([string(credentialsId: 'db-password', variable: 'DB_PASSWORD')]) {
+                    sh '''
+                        docker rm -f workforce-app || true
+                        docker run -d --name workforce-app --restart unless-stopped \
+                          -p 8000:8000 \
+                          -v workforce_data:/app/data \
+                          -e AWS_STORAGE_BUCKET_NAME=workforce-management-storage-unique-xyz \
+                          -e DB_HOST=workforce-db.cl86s28023xt.eu-north-1.rds.amazonaws.com \
+                          -e DB_NAME=workforce_db \
+                          -e DB_USER=workforce_admin \
+                          -e DB_PASSWORD="$DB_PASSWORD" \
+                          ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    '''
+                }
             }
         }
 
