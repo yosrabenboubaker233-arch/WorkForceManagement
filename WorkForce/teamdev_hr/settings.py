@@ -2,6 +2,7 @@
 Django settings for teamdev_hr project.
 Workforce Management — Plateforme de gestion des ressources humaines
 """
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
