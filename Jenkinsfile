@@ -33,7 +33,10 @@ pipeline {
                             ${scannerHome}/bin/sonar-scanner \
                               -Dsonar.projectKey=workforce-django \
                               -Dsonar.sources=WorkForce \
-                              -Dsonar.exclusions=**/migrations/**,**/static/**
+                              -Dsonar.tests=WorkForce \
+                              -Dsonar.test.inclusions=**/tests.py,**/tests/**,**/test_*.py \
+                              -Dsonar.exclusions=**/migrations/**,**/static/**,**/tests.py,**/tests/**,**/test_*.py \
+                              -Dsonar.python.version=3.12
                         """
                     }
                 }
