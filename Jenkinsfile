@@ -79,6 +79,7 @@ pipeline {
                     docker run -d --name workforce-app --restart unless-stopped \
                       -p 8000:8000 \
                       -v workforce_data:/app/data \
+                      -e AWS_STORAGE_BUCKET_NAME=workforce-management-storage-unique-xyz \
                       ${DOCKER_IMAGE}:${BUILD_NUMBER}
                 '''
             }
